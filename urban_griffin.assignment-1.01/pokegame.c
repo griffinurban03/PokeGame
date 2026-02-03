@@ -4,7 +4,7 @@
 int main(int argc, char *argv[])
 {
 	map m;
-	if (map_init(&m)) {
+	if (map_init(&m, 80, 21)) {
 		return -1;
 	}
 
