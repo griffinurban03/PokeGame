@@ -76,7 +76,7 @@ int map_print(map *m)
 /*
 * Place % around the border of the map
 */
-int generate_borders(map *m) {
+int map_generate_borders(map *m) {
 	int x, y;
 
 	for (x = 0; x < m->width; x++) {
@@ -91,10 +91,86 @@ int generate_borders(map *m) {
 	return 0;
 }
 
+void dykstra_path(map *m, int start_x, int start_y, int end_x, int end_y) {
+	// Placeholder for actual algorithm, draws straight line. Should not draw paths on borders.
+
+	// place a random point between start and end
+	int mid_x = (start_x + end_x) / 2 + (rand() % 5) - 2;
+	int mid_y = (start_y + end_y) / 2 + (rand() % 5) - 2;
+
+	// Draw from start mid, then mid to end
+	int x, y;
+	x = start_x;
+	y = start_y;
+	while (x != mid_x || y != mid_y) {
+		m->cells[y][x] = '#';
+		if (x < mid_x && x < m->width - 1) x++;
+		else if (x > mid_x && x > 0) x--;
+		if (y < mid_y && y < m->height - 1) y++;
+		else if (y > mid_y && y > 0) y--;
+	}
+
+	x = mid_x;
+	y = mid_y;
+	while (x != end_x || y != end_y) {
+		m->cells[y][x] = '#';
+		if (x < end_x && x < m->width - 1) x++;
+		else if (x > end_x && x > 0) x--;
+		if (y < end_y && y < m->height - 1) y++;
+		else if (y > end_y && y > 0) y--;
+	}
+
+
+	
+
+}
+
+/*
+* Generate NS and EW paths, set 4 border cells to '#', excluding corners, randomly.
+* Then, use dykstra's to create paths between them, following edges between terrain types
+*/
+int map_generate_paths(map *m) {
+
+	int north_x = (rand() % (m->width - 4)) + 3;
+	int south_x = (rand() % (m->width - 4)) + 3;
+	int east_y = (rand() % (m->height - 4)) + 3;
+	int west_y = (rand() % (m->height - 4)) + 3;
+
+	m->cells[0][north_x] = '#';
+	m->cells[m->height - 1][south_x] = '#';
+	m->cells[east_y][0] = '#';
+	m->cells[west_y][m->width - 1] = '#';
+
+	m->north_gate[0] = north_x;
+	m->north_gate[1] = 0;
+	m->south_gate[0] = south_x;
+	m->south_gate[1] = m->height - 1;
+	m->east_gate[0] = 0;
+	m->east_gate[1] = east_y;
+	m->west_gate[0] = m->width - 1;
+	m->west_gate[1] = west_y;
+
+	// connect north to south
+	dykstra_path(m, north_x, 0, south_x, m->height - 1);
+
+	// connect east to west
+	dykstra_path(m, 0, east_y, m->width - 1, west_y);
+
+	return 0;
+}
+
+/*
+* Generate 2 2x2 pokeshops at random locations attatched to a pathway '#'
+*/
+int map_generate_pokeshops(map *m) {
+	// TODO
+	return 0;
+}
+
 /*
 * Generate a random map with different terrain types 
 */
-int map_generate(map *m)
+int map_generate_terrain(map *m)
 {
 	int i;
 	int x, y;
@@ -136,10 +212,24 @@ int map_generate(map *m)
 		}
 		iterations++;
 	}
+	
+	return 0;
+}
 
-	if(!generate_borders(m)) {
-		return -1;
-	}
+int map_generate(map *m)
+{
+	map_generate_terrain(m);
+	map_generate_borders(m);
+	map_generate_paths(m);
+	map_generate_pokeshops(m);
+
+
+	// DEBUG
+	printf("Gate locations:\n");
+	printf("North Gate: (%d, %d)\n", m->north_gate[0], m->north_gate[1]);
+	printf("South Gate: (%d, %d)\n", m->south_gate[0], m->south_gate[1]);
+	printf("East Gate: (%d, %d)\n", m->east_gate[0], m->east_gate[1]);
+	printf("West Gate: (%d, %d)\n", m->west_gate[0], m->west_gate[1]);
 	
 	return 0;
 }
