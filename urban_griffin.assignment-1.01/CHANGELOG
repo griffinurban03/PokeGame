@@ -1,1 +1,5 @@
 2/3 4:30 PM - Initialized Project
+2/3 5:40 PM - Created Map files to build world off off
+2/3 6:00 PM - Got the map to print 80x21 characters to the terminal.
+2/3 6:30 PM - Created an enum for terrain types, followed Jeremy's advice and set seed cells to build upon.
+2/3 6:50 PM - Finished algorithm for growing terrain from seeds, map is given 1000 iterations to grow cells, each iteration selects random x and y cells, tests if they contain a non '0' character (inital board fill character) and tries to randomly grow into a neighboring cell.
