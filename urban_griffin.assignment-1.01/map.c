@@ -237,6 +237,15 @@ int map_generate_terrain(map *m)
 		}
 		iterations++;
 	}
+
+	// final pass to fill any remaining empty cells with short grass
+	for (y = 0; y < m->height; y++) {
+		for (x = 0; x < m->width; x++) {
+			if (m->cells[y][x] == '0') {
+				m->cells[y][x] = TERRAIN_SHORT_GRASS;
+			}
+		}
+	}
 	
 	return 0;
 }
