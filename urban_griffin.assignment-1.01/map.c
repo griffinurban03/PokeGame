@@ -163,7 +163,32 @@ int map_generate_paths(map *m) {
 * Generate 2 2x2 pokeshops at random locations attatched to a pathway '#'
 */
 int map_generate_pokeshops(map *m) {
-	// TODO
+	int p = 0;
+	while(p < 2) {
+		int x = rand() % (m->width - 4) + 2;
+		int y = rand() % (m->height - 4) + 2;
+
+		// Check if adjacent to path
+		if ((m->cells[y-1][x] == '#'|| m->cells[y+2][x] == '#') && 
+			(m->cells[y][x+1] != '#') && 
+			(m->cells[y+1][x] != '#') && 
+			(m->cells[y+1][x+1] != '#')) 
+		{
+			if (p == 0) {
+				m->cells[y][x] = 'M';
+				m->cells[y][x+1] = 'M';
+				m->cells[y+1][x] = 'M';
+				m->cells[y+1][x+1] = 'M';
+				p++;
+			} else {
+				m->cells[y][x] = 'C';
+				m->cells[y][x+1] = 'C';
+				m->cells[y+1][x] = 'C';
+				m->cells[y+1][x+1] = 'C';
+				p++;
+			}
+		}
+	}
 	return 0;
 }
 
