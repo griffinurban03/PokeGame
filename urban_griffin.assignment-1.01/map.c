@@ -19,16 +19,20 @@ char terrain_type[] = {
 	TERRAIN_WATER
 };
 
+/*
+* Initialize the map with given width and height. Creates a 2D array for the map cells with the '0' character.
+*/
 int map_init(map *m, int w, int h)
 {
+	int i, j;
+
 	m->width = w;
 	m->height = h;
 
-	// Create the 2D array for the map cells of % for testing
 	m->cells = malloc(h * sizeof(char *));
-	for (int i = 0; i < h; i++) {
+	for (i = 0; i < h; i++) {
 		m->cells[i] = malloc(w * sizeof(char));
-		for (int j = 0; j < w; j++) {
+		for (j = 0; j < w; j++) {
 			m->cells[i][j] = '0';
 		}
 	}
@@ -36,21 +40,52 @@ int map_init(map *m, int w, int h)
 	return 0;
 }
 
+/*
+* Free the allocated memory for the map cells
+*/
 int map_destroy(map *m)
 {
-	// Free the allocated memory for the map cells
+	int i;
+
+	for (i = 0; i < m->height; i++) {
+		free(m->cells[i]);
+	}
+	free(m->cells);
 
 	return 0;
 }
 
+
+/*
+* Print the map to the console
+*/
 int map_print(map *m)
 {
-	// Print the map to the console
-	for (int i = 0; i < m->height; i++) {
-		for (int j = 0; j < m->width; j++) {
+	int i, j;
+	
+	for (i = 0; i < m->height; i++) {
+		for (j = 0; j < m->width; j++) {
 			printf("%c", m->cells[i][j]);
 		}
 		printf("\n");
+	}
+
+	return 0;
+}
+
+/*
+* Place % around the border of the map
+*/
+int generate_borders(map *m) {
+	int x, y;
+
+	for (x = 0; x < m->width; x++) {
+		m->cells[0][x] = '%';
+		m->cells[m->height - 1][x] = '%';
+	}
+	for (y = 0; y < m->height; y++) {
+		m->cells[y][0] = '%';
+		m->cells[y][m->width - 1] = '%';
 	}
 
 	return 0;
@@ -70,8 +105,8 @@ int map_generate(map *m)
 
 	// Place 8 terrain "seeds" across the map, then grow them out to create clusters of terrain
 	for (i = 0; i < 20; i++) {
-		int x = rand() % m->width;
-		int y = rand() % m->height;
+		x = rand() % m->width;
+		y = rand() % m->height;
 		m->cells[y][x] = terrain_type[(i % 5)];
 	}
 
@@ -101,15 +136,9 @@ int map_generate(map *m)
 		}
 		iterations++;
 	}
-	
-	// place % around the border of the map
-	for (x = 0; x < m->width; x++) {
-		m->cells[0][x] = '%';
-		m->cells[m->height - 1][x] = '%';
-	}
-	for (y = 0; y < m->height; y++) {
-		m->cells[y][0] = '%';
-		m->cells[y][m->width - 1] = '%';
+
+	if(!generate_borders(m)) {
+		return -1;
 	}
 	
 	return 0;

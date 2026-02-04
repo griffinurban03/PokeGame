@@ -15,5 +15,6 @@ int main(int argc, char *argv[])
 
 	printf("w: %d, h: %d\n", m.width, m.height);
 	map_print(&m);
+	map_destroy(&m);
 	return 0;
 }
