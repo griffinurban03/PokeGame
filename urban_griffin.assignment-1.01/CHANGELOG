@@ -6,3 +6,4 @@
 2/3 9:00 PM  - Created 2 methods to place borders '%' around the edge of the map, and to place path/gate/exits along the border.
 2/4 11:00 AM - Added new variables in map.h header file to store map gate locations
 2/4 1:30 PM  - Added placeholder pathing function, simply chooses random midpoint, and respective gates grow toward mid.
+2/4 3:00 PM  - Added function to place pokemarts and pokecenters that are 2x2 and adjacent to paths, without overlapping paths
