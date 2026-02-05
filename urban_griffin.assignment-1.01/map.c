@@ -256,14 +256,14 @@ int map_generate(map *m)
 	map_generate_borders(m);
 	map_generate_paths(m);
 	map_generate_pokeshops(m);
-
-
-	// DEBUG
+	
+	/* // Debug
 	printf("Gate locations:\n");
 	printf("North Gate: (%d, %d)\n", m->north_gate[0], m->north_gate[1]);
 	printf("South Gate: (%d, %d)\n", m->south_gate[0], m->south_gate[1]);
 	printf("East Gate: (%d, %d)\n", m->east_gate[0], m->east_gate[1]);
 	printf("West Gate: (%d, %d)\n", m->west_gate[0], m->west_gate[1]);
-	
+	*/
+
 	return 0;
 }

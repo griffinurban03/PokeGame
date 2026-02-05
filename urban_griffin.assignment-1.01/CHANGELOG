@@ -7,3 +7,5 @@
 2/4 11:00 AM - Added new variables in map.h header file to store map gate locations
 2/4 1:30 PM  - Added placeholder pathing function, simply chooses random midpoint, and respective gates grow toward mid.
 2/4 3:00 PM  - Added function to place pokemarts and pokecenters that are 2x2 and adjacent to paths, without overlapping paths
+2/4 4:00 PM  - Fixed bug with pokemarts/centers that caused them to still be created on top of pathways
+2/4 8:00 PM  - Finalized code for now and tarball-ing for submission
