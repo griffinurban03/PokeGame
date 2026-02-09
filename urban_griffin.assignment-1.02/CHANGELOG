@@ -1,0 +1,12 @@
+2/3 4:30 PM  - Initialized Project
+2/3 5:40 PM  - Created Map files to build world off off..
+2/3 6:00 PM  - Got the map to print 80x21 characters to the terminal.
+2/3 6:30 PM  - Created an enum for terrain types, followed Jeremy's advice and set seed cells to build upon.
+2/3 6:50 PM  - Finished algorithm for growing terrain from seeds, map is given 1000 iterations to grow cells, each iteration randomly tries to grow cells
+2/3 9:00 PM  - Created 2 methods to place borders '%' around the edge of the map, and to place path/gate/exits along the border.
+2/4 11:00 AM - Added new variables in map.h header file to store map gate locations
+2/4 1:30 PM  - Added placeholder pathing function, simply chooses random midpoint, and respective gates grow toward mid.
+2/4 3:00 PM  - Added function to place pokemarts and pokecenters that are 2x2 and adjacent to paths, without overlapping paths
+2/4 4:00 PM  - Fixed bug with pokemarts/centers that caused them to still be created on top of pathways
+2/4 8:00 PM  - Finalized code for now and tarball-ing for submission
+2/4 9:55 PM  - Reuploading because I forgot to make clean
