@@ -10,3 +10,13 @@
 2/4 4:00 PM  - Fixed bug with pokemarts/centers that caused them to still be created on top of pathways
 2/4 8:00 PM  - Finalized code for now and tarball-ing for submission
 2/4 9:55 PM  - Reuploading because I forgot to make clean
+2/6 2:00 PM  - Created a new header file for worlds
+2/6 3:45 PM  - Implemented data structure to hold individual maps in 2d array, and world.c file
+2/9 5:00 PM  - Refactored the map.c and pokegame.c to dynamically allocate space for new worlds
+2/9 8:00 PM  - Implemented commands (n,e,s,w,q,fxy) and allowed the player to move between locations
+2/10 4:40 PM - Added gate checking to each new loaded map, allowing gates to connect between maps
+2/11 6:00 PM - Fixed an issue caused by variable swapping in which moving north caused a crash
+2/11 7:00 PM - Fixed an issue that prevented maps from being cleared correctly
+2/11 7:30 PM - Implemented probability for pokecenters/marts placement according to Manhattan distance
+2/11 8:00 PM - Fixed an issue that caused pokemarts to spawn on pokecenters
+2/11 8:30 PM - Prepared 1.02 for submission.

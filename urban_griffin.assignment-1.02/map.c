@@ -97,6 +97,12 @@ void dykstra_path(map *m, int start_x, int start_y, int end_x, int end_y) {
 	// place a random point between start and end
 	int mid_x = (start_x + end_x) / 2 + (rand() % 5) - 2;
 	int mid_y = (start_y + end_y) / 2 + (rand() % 5) - 2;
+	
+	if (mid_x < 1) mid_x = 1;
+	if (mid_x > m->width - 2) mid_x = m->width - 2;
+	if (mid_y < 1) mid_y = 1;
+	if (mid_y > m->height - 2) mid_y = m->height - 2;
+
 
 	// Draw from start mid, then mid to end
 	int x, y;
@@ -129,12 +135,12 @@ void dykstra_path(map *m, int start_x, int start_y, int end_x, int end_y) {
 * Generate NS and EW paths, set 4 border cells to '#', excluding corners, randomly.
 * Then, use dykstra's to create paths between them, following edges between terrain types
 */
-int map_generate_paths(map *m) {
+int map_generate_paths(map *m, int n, int s, int e, int w) {
 
-	int north_x = (rand() % (m->width - 4)) + 3;
-	int south_x = (rand() % (m->width - 4)) + 3;
-	int east_y = (rand() % (m->height - 4)) + 3;
-	int west_y = (rand() % (m->height - 4)) + 3;
+	int north_x = (n == -1) ? (rand() % (m->width - 4)) + 3 : n;
+	int south_x = (s == -1) ? (rand() % (m->width - 4)) + 3 : s;
+	int east_y = (e == -1) ? (rand() % (m->height - 4)) + 3 : e;
+	int west_y = (w == -1) ? (rand() % (m->height - 4)) + 3 : w;
 
 	m->cells[0][north_x] = '#';
 	m->cells[m->height - 1][south_x] = '#';
@@ -162,33 +168,77 @@ int map_generate_paths(map *m) {
 /*
 * Generate 2 2x2 pokeshops at random locations attatched to a pathway '#'
 */
-int map_generate_pokeshops(map *m) {
-	int p = 0;
-	while(p < 2) {
-		int x = rand() % (m->width - 4) + 2;
-		int y = rand() % (m->height - 4) + 2;
+int map_generate_pokeshops(map *m, int x, int y) {
+	int d = abs(x - 200) + abs(y - 200);
+	int probability = 0;
 
-		// Check if adjacent to path
-		if ((m->cells[y-1][x] == '#'|| m->cells[y+2][x] == '#') && 
-			(m->cells[y][x+1] != '#') && 
-			(m->cells[y+1][x] != '#') && 
-			(m->cells[y+1][x+1] != '#')) 
-		{
-			if (p == 0) {
-				m->cells[y][x] = 'M';
-				m->cells[y][x+1] = 'M';
-				m->cells[y+1][x] = 'M';
-				m->cells[y+1][x+1] = 'M';
-				p++;
-			} else {
-				m->cells[y][x] = 'C';
-				m->cells[y][x+1] = 'C';
-				m->cells[y+1][x] = 'C';
-				m->cells[y+1][x+1] = 'C';
-				p++;
-			}
-		}
+	if (d == 0) {
+		probability = 100;
+	} else if (d < 200) {
+		probability = ((-45 * d) / 200) + 50;
+	} else {
+		probability = 5;
 	}
+
+	int has_center = (rand() % 100) < probability;
+	int has_mart = (rand() % 100) < probability;
+
+	if (d == 0) {
+		has_center = 1;
+		has_mart = 1;
+	}
+	
+	/* Place Pokemon Center if chosen */
+	if (has_center) {
+        	int placed = 0;
+        	while (!placed) {
+            		int mx = rand() % (m->width - 4) + 2;
+            		int my = rand() % (m->height - 4) + 2;
+
+            		/* Check adjacent to path */
+            		if ((m->cells[my-1][mx] == '#'|| m->cells[my+2][mx] == '#' ||
+                		 m->cells[my][mx-1] == '#'|| m->cells[my][mx+2] == '#') && 
+                		(m->cells[my][mx] != 'M' && m->cells[my][mx] != 'C') &&
+				(m->cells[my][mx] != '#') &&
+                		(m->cells[my][mx+1] != '#') && 
+                		(m->cells[my+1][mx] != '#') && 
+                		(m->cells[my+1][mx+1] != '#')) 
+            		{
+                		m->cells[my][mx] = 'C';
+                		m->cells[my][mx+1] = 'C';
+                		m->cells[my+1][mx] = 'C';
+                		m->cells[my+1][mx+1] = 'C';
+                		placed = 1;
+            		}
+        	}
+    	}
+
+    	/* Place PokeMart if chosen */
+    	if (has_mart) {
+        	int placed = 0;
+       		while (!placed) {
+      			int mx = rand() % (m->width - 4) + 2;
+ 	        	int my = rand() % (m->height - 4) + 2;
+
+            		if ((m->cells[my-1][mx] == '#'|| m->cells[my+2][mx] == '#' ||
+                 		m->cells[my][mx-1] == '#'|| m->cells[my][mx+2] == '#') && 
+                		(m->cells[my][mx] != 'C' && m->cells[my][mx] != 'M') &&
+                		(m->cells[my][mx] != '#') &&
+				(m->cells[my][mx+1] != '#') && 
+                		(m->cells[my+1][mx] != '#') && 
+                		(m->cells[my+1][mx+1] != '#')) 
+            		{
+                		m->cells[my][mx] = 'M';
+                		m->cells[my][mx+1] = 'M';
+                		m->cells[my+1][mx] = 'M';
+                		m->cells[my+1][mx+1] = 'M';
+                		placed = 1;
+            		}
+        	}
+    	}
+
+
+
 	return 0;
 }
 
@@ -250,12 +300,12 @@ int map_generate_terrain(map *m)
 	return 0;
 }
 
-int map_generate(map *m)
+int map_generate(map *m, int x, int y, int n, int s, int e, int w)
 {
 	map_generate_terrain(m);
 	map_generate_borders(m);
-	map_generate_paths(m);
-	map_generate_pokeshops(m);
+	map_generate_paths(m, n, s, e, w);
+	map_generate_pokeshops(m, x, y);
 	
 	/* // Debug
 	printf("Gate locations:\n");

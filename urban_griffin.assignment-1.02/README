@@ -1,13 +1,18 @@
-Assignment 1.01 - Terrain Generation
+Assignment 1.02 - Map to Map
 
 Hi TA,
 
-This implementation of assignment 1.01 creates a random landscape (80 x 21) of varying terrain types (short grass, tall grass, water, boulder, tree)
-I place random seeds of terrain, like the implementation Jeremy suggeted, and from there, the code has 1000 iterations. Each iteration, we choose w * h random points on the map, if the point lands on a cell with terrain decided, we randomly grow into a neighboring cell. After 1000 iterations, the terrain grows into nice looking "terrain blobs". After that, if any remaining cells are empty, I convert them to short grass as a workaround. (I will fix this later)
+This implementation of assignment 1.02.
 
-Then, we trace the borders of the map and place '%'. Once that is done, I choose random points on the borders to use a gates (while avoiding corners). Then, for each NS/EW combo, i choose a random midpoint on the map, and have the respective gates path to that point. While this solution results in lots of straight lines, I dont think it looks THAT bad. I plan on implementing Dykstra's at some point, but we'll cross that bridge when we get there. For now, this works great. Right after that, I have a function that checks for spots on the path to place pokemarts/centers. If no overlap will occur, I place a 2x2 M or C to mark the building. With that, I complete the requirements of the assignment.
+This code builds upon assignment 1.01 to create a big wide beautiful world! In a new header file, world.h I define the structure of world to hold all of the 'maps'. Im using the term 'map' to describe the single 80x21 terrain gen you see on the screen. The 'world' is made up of 401x401 'maps'. On initialization, every 'map' in the 'world' is defined to null, except for the starting map. From there, any 'maps' moved to by the player will be malloced, created, and rendered to the screen. maps are persistent between transitions, so moving e, w, e, w, e, w, e, w will show you the same two maps.
 
-Additionally, some debug info is displayed. Currently width and height are displayed, but gate locations can also be viewed by uncommented code in map_generate function.
+Gates are also tracked in each map, meaning that gate exits line up between map transitions. This is simply done by checking neighbors exit locations (if they exist) when creating the paths in a new map.
+
+Additionally, this code allows us to use custom commands! use n, e, s, w to move from map to map. Use q to quit, and use f x y to 'fly' to x and y coordinates. Do not attempt to fly off the map, because you cant. nor can you walk across the map border. That being said, I did not figure out how to prevent the gates from spawning along the world border yet, so gates appear that technically lead to nowhere. However, I implemented a simple check and prevent the player from loading maps outside of our area, and simply write an error to the console screen without terminating the program.
+
+Finally, I implemented the equation listed in the pdf to have pokecenter and pokemart falloff as you move further away from the center (0, 0). 
+
+All code written in C.
 
 If there are any questions about the code please feel free to reach out at griffinu@iastate.edu
 
