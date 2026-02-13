@@ -6,6 +6,21 @@
 #include "map.h"
 #include "world.h"
 
+void print_splashscreen() {
+printf(" /$$$$$$$   /$$$$$$  /$$   /$$ /$$$$$$$$  /$$$$$$   /$$$$$$  /$$      /$$ /$$$$$$$$\n");
+printf("| $$__  $$ /$$__  $$| $$  /$$/| $$_____/ /$$__  $$ /$$__  $$| $$$    /$$$| $$_____/\n");
+printf("| $$  \\ $$| $$  \\ $$| $$ /$$/ | $$      | $$  \\__/| $$  \\ $$| $$$$  /$$$$| $$      \n");
+printf("| $$$$$$$/| $$  | $$| $$$$$/  | $$$$$   | $$ /$$$$| $$$$$$$$| $$ $$/$$ $$| $$$$$   \n");
+printf("| $$____/ | $$  | $$| $$  $$  | $$__/   | $$|_  $$| $$__  $$| $$  $$$| $$| $$__/   \n");
+printf("| $$      | $$  | $$| $$\\  $$ | $$      | $$  \\ $$| $$  | $$| $$\\  $ | $$| $$      \n");
+printf("| $$      |  $$$$$$/| $$ \\  $$| $$$$$$$$|  $$$$$$/| $$  | $$| $$ \\/  | $$| $$$$$$$$\n");
+printf("|__/       \\______/ |__/  \\__/|________/ \\______/ |__/  |__/|__/     |__/|________/\n");
+printf("\n");
+}
+                                                                                 
+                                                                                   
+                                                                                   
+
 int main(int argc, char *argv[])
 {
 	srand(time(NULL));
@@ -27,7 +42,7 @@ int main(int argc, char *argv[])
 	map_print(current_map);
 
 	// Print text - First text shown on screen - maybe a welcome message?
-	printf("Welcome to the PokeGame!\n");
+	print_splashscreen();
 	printf("Current coordinates: (%d, %d)\n", cur_x - 200, cur_y - 200);
 
 	bool running = true;
