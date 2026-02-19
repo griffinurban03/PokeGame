@@ -24,3 +24,11 @@
 2/12 10:15 AM- Fixed an issue where first map would display coords incorrectly
 2/12 4:00 PM - Cleaned up command switch statement to make it more readable, added more comments to pokegame.c
 2/12 4:15 PM - Added screen clearing between maps
+2/18 3:30 PM - Reworked path generation, using a midpoint between center + edge to path to
+2/18 4:00 PM - Fixed a big where NS paths werent lining up always
+2/18 4:30 PM - Reworked map data structure, no longer a 2D char array, but like Jeremys approach, uses
+	       an array of enums for terrain types. A final pass goes through the array and assigns chars to types
+2/18 5:15 PM - Reworked pathing logic to prevent paths from forming on the edges of the world.
+2/18 6:00 PM - Redid terrain generation method using cellular automata approach. Creates biomes that grow and a smoothing noise function to create nicer looking terrain
+2/18 7:30 PM - Finished CA method and biome helper method, and created a pass function to add trees at bases of mountains
+

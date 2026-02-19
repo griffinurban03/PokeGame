@@ -58,12 +58,11 @@ map* world_get_map(world *w, int x, int y)
 	w->maps[y][x] = malloc(sizeof(map));
 	map_init(w->maps[y][x], MAP_WIDTH, MAP_HEIGHT); // moved map definitions to remove magic nums
 
-	// Check neighbors for gates
-	// Set gates default to -1 for no gate
-	int n = -1;
-	int s = -1;
-	int e = -1;
-	int west = -1;
+	// Set gate defaults: -1 for random, -2 for border
+	int n = (y == 0) ? -2 : -1;
+	int s = (y == WORLD_SIZE_Y - 1) ? -2 : -1;
+	int e = (x == WORLD_SIZE_X - 1) ? -2 : -1;
+	int west = (x == 0) ? -2 : -1;
 
 	if (y - 1 >= 0 && w->maps[y - 1][x]) {
 		n = w->maps[y - 1][x]->south_gate[0];

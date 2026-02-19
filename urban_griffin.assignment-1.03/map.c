@@ -1,38 +1,31 @@
-#include "map.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
+#include "map.h"
 
-enum terrain_chars {
-	TERRAIN_SHORT_GRASS = '.',
-	TERRAIN_TALL_GRASS = ':',
-	TERRAIN_BOULDER = '%',
-	TERRAIN_TREE = '^',
-	TERRAIN_WATER = '~'
+/*
+ * Terrain types and properties
+ */
+static const char terrain_char_map[TERRAIN_TYPE_COUNT] = {
+	[ter_debug]    = '0' ,
+	[ter_boulder]  = '%' ,
+	[ter_tree]     = '^' ,
+	[ter_path]     = '#' ,
+	[ter_mart]     = 'M' ,
+	[ter_center]   = 'C' ,
+	[ter_grass]    = ':' , 
+	[ter_clearing] = '.' , 
+	[ter_mountain] = '%' ,
+	[ter_forest]   = '^' ,
+	[ter_water]    = '~' ,
+	[ter_gate]     = '#' 
 };
 
-char terrain_type[] = {
-	TERRAIN_SHORT_GRASS,
-	TERRAIN_TALL_GRASS,
-	TERRAIN_BOULDER,
-	TERRAIN_TREE,
-	TERRAIN_WATER
-};
-
-enum terrain_t {
-	ter_debug,
-	ter_boulder,
-	ter_tree,
-	ter_path,
-	ter_mart,
-	ter_center,
-	ter_grass,
-	ter_clearing,
-	ter_mountain,
-	ter_forest,
-	ter_water,
-	ter_gate
-} terrain_type_t;
+// Replacement for char method
+char map_get_terrain_char(terrain_type_t t) {
+	if (t < 0 || t >= TERRAIN_TYPE_COUNT) return '0';
+	return terrain_char_map[t];
+}
 
 /*
 * Initialize the map with given width and height. Creates a 2D array for the map cells with the '0' character.
@@ -44,11 +37,11 @@ int map_init(map *m, int w, int h)
 	m->width = w;
 	m->height = h;
 
-	m->cells = malloc(h * sizeof(char *));
+	m->cells = malloc(h * sizeof(terrain_type_t *));
 	for (i = 0; i < h; i++) {
-		m->cells[i] = malloc(w * sizeof(char));
+		m->cells[i] = malloc(w * sizeof(terrain_type_t));
 		for (j = 0; j < w; j++) {
-			m->cells[i][j] = '0';
+			m->cells[i][j] = ter_debug;
 		}
 	}
 
@@ -80,7 +73,7 @@ int map_print(map *m)
 	
 	for (i = 0; i < m->height; i++) {
 		for (j = 0; j < m->width; j++) {
-			printf("%c", m->cells[i][j]);
+			printf("%c", map_get_terrain_char(m->cells[i][j])); // Updated to use terrain_type_t
 		}
 		printf("\n");
 	}
@@ -95,12 +88,12 @@ int map_generate_borders(map *m) {
 	int x, y;
 
 	for (x = 0; x < m->width; x++) {
-		m->cells[0][x] = '%';
-		m->cells[m->height - 1][x] = '%';
+		m->cells[0][x]             = ter_boulder;
+		m->cells[m->height - 1][x] = ter_boulder;
 	}
 	for (y = 0; y < m->height; y++) {
-		m->cells[y][0] = '%';
-		m->cells[y][m->width - 1] = '%';
+		m->cells[y][0]             = ter_boulder;
+		m->cells[y][m->width - 1]  = ter_boulder;
 	}
 
 	return 0;
@@ -124,7 +117,7 @@ void dykstra_path(map *m, int start_x, int start_y, int end_x, int end_y) {
 	x = start_x;
 	y = start_y;
 	while (x != mid_x || y != mid_y) {
-		m->cells[y][x] = '#';
+		m->cells[y][x] = ter_path;
 		if (x < mid_x && x < m->width - 1) x++;
 		else if (x > mid_x && x > 0) x--;
 		if (y < mid_y && y < m->height - 1) y++;
@@ -134,7 +127,7 @@ void dykstra_path(map *m, int start_x, int start_y, int end_x, int end_y) {
 	x = mid_x;
 	y = mid_y;
 	while (x != end_x || y != end_y) {
-		m->cells[y][x] = '#';
+		m->cells[y][x] = ter_path;
 		if (x < end_x && x < m->width - 1) x++;
 		else if (x > end_x && x > 0) x--;
 		if (y < end_y && y < m->height - 1) y++;
@@ -157,26 +150,46 @@ int map_generate_paths(map *m, int n, int s, int e, int w) {
 	int east_y = (e == -1) ? (rand() % (m->height - 4)) + 3 : e;
 	int west_y = (w == -1) ? (rand() % (m->height - 4)) + 3 : w;
 
-	m->cells[0][north_x] = '#';
-	m->cells[m->height - 1][south_x] = '#';
-	m->cells[east_y][0] = '#';
-	m->cells[west_y][m->width - 1] = '#';
+	// Initialize gates to an invalid default (-1)
+	m->north_gate[0] = -1; m->north_gate[1] = -1;
+	m->south_gate[0] = -1; m->south_gate[1] = -1;
+	m->east_gate[0]  = -1; m->east_gate[1]  = -1;
+	m->west_gate[0]  = -1; m->west_gate[1]  = -1;
 
-	m->north_gate[0] = north_x;
-	m->north_gate[1] = 0;
-	m->south_gate[0] = south_x;
-	m->south_gate[1] = m->height - 1;
-	m->east_gate[0] = 0;
-	m->east_gate[1] = east_y;
-	m->west_gate[0] = m->width - 1;
-	m->west_gate[1] = west_y;
+	// Place gates and store coordinates if not on a world edge (-2)
+	if (n != -2) {
+		m->cells[0][north_x] = ter_path;
+		m->north_gate[0] = north_x;
+		m->north_gate[1] = 0;
+	}
+	if (s != -2) {
+		m->cells[m->height - 1][south_x] = ter_path;
+		m->south_gate[0] = south_x;
+		m->south_gate[1] = m->height - 1;
+	}
+	if (e != -2) {
+		m->cells[east_y][m->width - 1] = ter_path;
+		m->east_gate[0] = m->width - 1;
+		m->east_gate[1] = east_y;
+	}
+	if (w != -2) {
+		m->cells[west_y][0] = ter_path;
+		m->west_gate[0] = 0;
+		m->west_gate[1] = west_y;
+	}
 
-	// connect north to south
-	dykstra_path(m, north_x, 0, south_x, m->height - 1);
+	// Create a midpoint for paths to intersect
+	int mid_x = m->width / 2;
+	int mid_y = m->height / 2;
 
-	// connect east to west
-	dykstra_path(m, 0, east_y, m->width - 1, west_y);
+	// Draw paths from valid gates to the midpoint
+	if (n != -2) dykstra_path(m, north_x, 0, mid_x, mid_y);
+	if (s != -2) dykstra_path(m, south_x, m->height - 1, mid_x, mid_y);
+	if (e != -2) dykstra_path(m, m->width - 1, east_y, mid_x, mid_y);
+	if (w != -2) dykstra_path(m, 0, west_y, mid_x, mid_y);
 
+	// Fix to make sure center isnt overridden
+	m->cells[mid_y][mid_x] = ter_path;
 	return 0;
 }
 
@@ -211,18 +224,18 @@ int map_generate_pokeshops(map *m, int x, int y) {
             		int my = rand() % (m->height - 4) + 2;
 
             		// Check adjacent to path
-            		if ((m->cells[my-1][mx] == '#'|| m->cells[my+2][mx] == '#' ||
-                		 m->cells[my][mx-1] == '#'|| m->cells[my][mx+2] == '#') && 
-                		(m->cells[my][mx] != 'M' && m->cells[my][mx] != 'C') &&
-				(m->cells[my][mx] != '#') &&
-                		(m->cells[my][mx+1] != '#') && 
-                		(m->cells[my+1][mx] != '#') && 
-                		(m->cells[my+1][mx+1] != '#')) 
+            		if ((m->cells[my-1][mx] == ter_path || m->cells[my+2][mx] == ter_path ||
+                		 m->cells[my][mx-1] == ter_path|| m->cells[my][mx+2] == ter_path) && 
+                		(m->cells[my][mx] != ter_mart && m->cells[my][mx] != ter_center) &&
+				(m->cells[my][mx] != ter_path) &&
+                		(m->cells[my][mx+1] != ter_path) && 
+                		(m->cells[my+1][mx] != ter_path) && 
+                		(m->cells[my+1][mx+1] != ter_path)) 
             		{
-                		m->cells[my][mx] = 'C';
-                		m->cells[my][mx+1] = 'C';
-                		m->cells[my+1][mx] = 'C';
-                		m->cells[my+1][mx+1] = 'C';
+                		m->cells[my][mx] = ter_center;
+                		m->cells[my][mx+1] = ter_center;
+                		m->cells[my+1][mx] = ter_center;
+                		m->cells[my+1][mx+1] = ter_center;
                 		placed = 1;
             		}
         	}
@@ -235,18 +248,18 @@ int map_generate_pokeshops(map *m, int x, int y) {
       			int mx = rand() % (m->width - 4) + 2;
  	        	int my = rand() % (m->height - 4) + 2;
 
-            		if ((m->cells[my-1][mx] == '#'|| m->cells[my+2][mx] == '#' ||
-                 		m->cells[my][mx-1] == '#'|| m->cells[my][mx+2] == '#') && 
-                		(m->cells[my][mx] != 'C' && m->cells[my][mx] != 'M') &&
-                		(m->cells[my][mx] != '#') &&
-				(m->cells[my][mx+1] != '#') && 
-                		(m->cells[my+1][mx] != '#') && 
-                		(m->cells[my+1][mx+1] != '#')) 
+            		if ((m->cells[my-1][mx] == ter_path || m->cells[my+2][mx] == ter_path ||
+                 		m->cells[my][mx-1] == ter_path || m->cells[my][mx+2] == ter_path) && 
+                		(m->cells[my][mx] != ter_center && m->cells[my][mx] != ter_mart) &&
+                		(m->cells[my][mx] != ter_path) &&
+				(m->cells[my][mx+1] != ter_path) && 
+                		(m->cells[my+1][mx] != ter_path) && 
+                		(m->cells[my+1][mx+1] != ter_path)) 
             		{
-                		m->cells[my][mx] = 'M';
-                		m->cells[my][mx+1] = 'M';
-                		m->cells[my+1][mx] = 'M';
-                		m->cells[my+1][mx+1] = 'M';
+                		m->cells[my][mx] = ter_mart;
+                		m->cells[my][mx+1] = ter_mart;
+                		m->cells[my+1][mx] = ter_mart;
+                		m->cells[my+1][mx+1] = ter_mart;
                 		placed = 1;
             		}
         	}
@@ -258,60 +271,100 @@ int map_generate_pokeshops(map *m, int x, int y) {
 }
 
 /*
+ * Biome Generator
+ */
+static int generate_biome(map *m, terrain_type_t biome, terrain_type_t base, int fill_probability, int iterations)
+{
+	int x, y, i, nx, ny;
+
+	terrain_type_t **temp = malloc(m->height * sizeof(terrain_type_t *));
+	for (i = 0; i < m->height; i++) {
+		temp[i] = malloc(m->width * sizeof(terrain_type_t));
+	}
+
+	// Random noise
+	for (y = 0; y < m->height; y++) {
+		for (x = 0; x < m->width; x++) {
+			if (m->cells[y][x] == base && (rand() % 100) < fill_probability) {
+				m->cells[y][x] = biome;
+			}
+		}
+	}
+
+	// Smooth passes
+	for (i = 0; i < iterations; i++) {
+		for (y = 0; y < m->height; y++) {
+			for (x = 0; x < m->width; x++) {
+				temp[y][x] = m->cells[y][x];
+			}
+		}
+
+		for (y = 0; y < m->height; y++) {
+			for (x = 0; x < m->width; x++) {
+				if (temp[y][x] == biome || temp[y][x] == base) {
+					int neighbors = 0;
+					for (ny = y - 1; ny <= y + 1; ny++) {
+						for (nx = x - 1; nx <= x + 1; nx++) {
+							if (nx >= 0 && nx < m->width && ny >= 0 && ny < m->height) {
+								if ((nx != x || ny != y) && temp[ny][nx] == biome) {
+									neighbors++;
+								}
+							}
+						}
+					}
+					if (neighbors >= 5) m->cells[y][x] = biome;
+					else if (neighbors <= 3) m->cells[y][x] = base;
+				}
+			}
+		}
+	}
+
+	for (i = 0; i < m->height; i++) free(temp[i]);
+	free(temp);
+
+
+	return 0;
+}
+
+
+/*
 * Generate a random map with different terrain types 
 */
 int map_generate_terrain(map *m)
 {
-	int i;
 	int x, y;
-	static int32_t offsets[8][2] = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}, {1, 1}, {-1, -1}, {1, -1}, {-1, 1}};
-
-	// Seed Random Number Generator
-	srand(time(NULL));
-
-	// Place 8 terrain "seeds" across the map, then grow them out to create clusters of terrain
-	for (i = 0; i < 20; i++) {
-		x = rand() % m->width;
-		y = rand() % m->height;
-		m->cells[y][x] = terrain_type[(i % 5)];
+	
+	for (y = 0; y < m->height; y++) {
+		for (x = 0; x < m->width; x++) {
+			m->cells[y][x] = ter_clearing;
+		}
 	}
 
-	// Grow cells until the map is filled
-	// Use multiple passes, each pass randomly selects cells to grow
-	int iterations = 0;
-	int cells_filled = 1;
-	
-	while (cells_filled > 0 && iterations < 1000) {
-		cells_filled = 0;
-		// Iterate random order to avoid "stalagtite phenomenon" i.e. top left to bottom right growth patterns (i can explain i know this sounds insane)
-		for (i = 0; i < m->width * m->height; i++) {
-			x = rand() % m->width;
-			y = rand() % m->height;
-			
-			if (m->cells[y][x] != '0') {
-				// Try to grow into one random neighbor
-				int random_offset = rand() % 8;
-				int nx = x + offsets[random_offset][0];
-				int ny = y + offsets[random_offset][1];
-				
-				if (nx >= 0 && nx < m->width && ny >= 0 && ny < m->height && m->cells[ny][nx] == '0') {
-					m->cells[ny][nx] = m->cells[y][x];
-					cells_filled++;
+	// Biome layering - map, biome to be added, base to add upon, noise, smoothing passes
+	generate_biome(m, ter_water, ter_clearing, 35, 10);
+	generate_biome(m, ter_mountain, ter_clearing, 40, 10);
+	generate_biome(m, ter_forest, ter_clearing, 40, 8);
+	generate_biome(m, ter_grass, ter_clearing, 55, 8);
+
+	// Foothill forests
+	for (y = 0; y < m->height; y++) {
+		for (x = 0; x < m->width; x++) {
+			if (m->cells[y][x] == ter_clearing) {
+				int next_to_mountain = 0;
+				for (int ny = y - 1; ny <= y + 1; ny++) {
+					for (int nx = x - 1; nx <= x + 1; nx++) {
+						if (nx >= 0 && nx < m->width && ny >= 0 && ny < m->height) {
+							if (m->cells[ny][nx] == ter_boulder) next_to_mountain = 1;
+						}
+					}
+				}
+				if (next_to_mountain && (rand() % 100) < 60) {
+					m->cells[y][x] = ter_tree;
 				}
 			}
 		}
-		iterations++;
 	}
 
-	// final pass to fill any remaining empty cells with short grass
-	for (y = 0; y < m->height; y++) {
-		for (x = 0; x < m->width; x++) {
-			if (m->cells[y][x] == '0') {
-				m->cells[y][x] = TERRAIN_SHORT_GRASS;
-			}
-		}
-	}
-	
 	return 0;
 }
 
