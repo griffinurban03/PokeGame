@@ -326,6 +326,79 @@ static int generate_biome(map *m, terrain_type_t biome, terrain_type_t base, int
 	return 0;
 }
 
+/*
+ * Places and scatters random aesthetic terrain details like trees or boulders
+ */
+int scatter_terrain_elements(map *m)
+{
+	// Place trees
+	int placed_trees = 0;
+
+	while (placed_trees < 10) {
+		int tx = rand() % m->width;
+		int ty = rand() % m->height;
+		terrain_type_t t = m->cells[ty][tx];
+
+		if (t == ter_clearing || t == ter_grass) {
+			m->cells[ty][tx] = ter_tree;
+			placed_trees++;
+		}
+	}
+
+	// Place Boulders
+	int placed_boulders = 0;
+
+	while (placed_boulders < 10) {
+		int bx = rand() % m->width;
+		int by = rand() % m->height;
+		terrain_type_t b = m->cells[by][bx];
+
+		if (b == ter_clearing || b == ter_grass) {
+			m->cells[by][bx] = ter_boulder;
+			placed_boulders++;
+		}
+	}
+
+	return 0;
+}
+
+/*
+ * Could be used later to generate some special terrain, like pregenerated ideas??
+ */
+int generate_special_terrain(map *m)
+{	
+	return 0;
+}
+
+/*
+ * Generates trees around mountain terrain
+ */
+int generate_foothill_forests(map *m)
+{
+	int x, y;
+
+	for (y = 0; y < m->height; y++) {
+                for (x = 0; x < m->width; x++) {
+                        if (m->cells[y][x] == ter_clearing) {
+                                int next_to_mountain = 0;
+                                for (int ny = y - 1; ny <= y + 1; ny++) {
+                                        for (int nx = x - 1; nx <= x + 1; nx++) {
+                                                if (nx >= 0 && nx < m->width && ny >= 0 && ny < m->height) {
+                                                        if (m->cells[ny][nx] == ter_mountain) next_to_mountain = 1;
+                                                }
+                                        }
+                                }
+                                if (next_to_mountain && (rand() % 100) < 60) {
+                                        m->cells[y][x] = ter_tree;
+                                }
+                        }
+                }
+        }
+
+	
+	return 0;
+}
+
 
 /*
 * Generate a random map with different terrain types 
@@ -341,28 +414,22 @@ int map_generate_terrain(map *m)
 	}
 
 	// Biome layering - map, biome to be added, base to add upon, noise, smoothing passes
-	generate_biome(m, ter_water, ter_clearing, 35, 10);
-	generate_biome(m, ter_mountain, ter_clearing, 40, 10);
-	generate_biome(m, ter_forest, ter_clearing, 40, 8);
-	generate_biome(m, ter_grass, ter_clearing, 55, 8);
+	generate_biome(m, ter_water, ter_clearing, 40, 100);
+	generate_biome(m, ter_mountain, ter_clearing, 45, 6);
+	generate_biome(m, ter_forest, ter_clearing, 50, 8);
+	generate_biome(m, ter_grass, ter_clearing, 45, 6);
+	generate_biome(m, ter_clearing, ter_grass, 35, 4);
 
-	// Foothill forests
-	for (y = 0; y < m->height; y++) {
-		for (x = 0; x < m->width; x++) {
-			if (m->cells[y][x] == ter_clearing) {
-				int next_to_mountain = 0;
-				for (int ny = y - 1; ny <= y + 1; ny++) {
-					for (int nx = x - 1; nx <= x + 1; nx++) {
-						if (nx >= 0 && nx < m->width && ny >= 0 && ny < m->height) {
-							if (m->cells[ny][nx] == ter_boulder) next_to_mountain = 1;
-						}
-					}
-				}
-				if (next_to_mountain && (rand() % 100) < 60) {
-					m->cells[y][x] = ter_tree;
-				}
-			}
-		}
+	// Generate Trees around mountains
+	generate_foothill_forests(m);
+	
+	// Scatter Boulders and Trees
+	if (!scatter_terrain_elements(m)) {
+		return -1;
+	}
+
+	if (!generate_special_terrain(m)) {
+		return -1;
 	}
 
 	return 0;
@@ -374,14 +441,6 @@ int map_generate(map *m, int x, int y, int n, int s, int e, int w)
 	map_generate_borders(m);
 	map_generate_paths(m, n, s, e, w);
 	map_generate_pokeshops(m, x, y);
-	
-	/* // Debug
-	printf("Gate locations:\n");
-	printf("North Gate: (%d, %d)\n", m->north_gate[0], m->north_gate[1]);
-	printf("South Gate: (%d, %d)\n", m->south_gate[0], m->south_gate[1]);
-	printf("East Gate: (%d, %d)\n", m->east_gate[0], m->east_gate[1]);
-	printf("West Gate: (%d, %d)\n", m->west_gate[0], m->west_gate[1]);
-	*/
 
 	return 0;
 }

@@ -18,7 +18,7 @@ printf("|__/       \\______/ |__/  \\__/|________/ \\______/ |__/  |__/|__/     
 printf("\n");
 }
                                                                                  
-                                                                                   
+#define DO_DEBUG 1                                                                                   
                                                                                    
 
 int main(int argc, char *argv[])
@@ -42,7 +42,7 @@ int main(int argc, char *argv[])
 	map_print(current_map);
 
 	// Print text - First text shown on screen - maybe a welcome message?
-	print_splashscreen();
+	// print_splashscreen();
 	printf("Current coordinates: (%d, %d)\n", cur_x - 200, cur_y - 200);
 
 	bool running = true;
@@ -58,9 +58,9 @@ int main(int argc, char *argv[])
 
 		// Check first for f x y
 		if (sscanf(c, "f %d %d", &fly_x, &fly_y) == 2) {
-			if (fly_x >= 0 && fly_x < WORLD_SIZE_X && fly_y >= 0 && fly_y < WORLD_SIZE_Y) {
-				new_x = fly_x;
-				new_y = fly_y;
+			if (fly_x >= (WORLD_SIZE_X / -2 - 1) && fly_x < (WORLD_SIZE_X / 2 + 1) && fly_y >= (WORLD_SIZE_Y / -2 - 1) && fly_y < (WORLD_SIZE_Y / 2 + 1)) {
+				new_x = fly_x + 200;
+				new_y = fly_y + 200;
 			} else {
 				printf("Coordinates out of bounds\n");
 				continue;
@@ -74,9 +74,8 @@ int main(int argc, char *argv[])
 				case 'q': printf("Quitting...\n"); running = false; break;
 				case '\n': break;
 				default: printf("Enter a valid command: n | e | s | w | q | f x y\n"); break;
+			}
 		}
-
-	}
 
 		if (running && (new_x != cur_x || new_y != cur_y)) {
 			if (new_x < 0 || new_x >= WORLD_SIZE_X || new_y < 0 || new_y >= WORLD_SIZE_Y) {
