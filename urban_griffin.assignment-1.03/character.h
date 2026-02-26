@@ -2,6 +2,7 @@
 #define CHARACTER_H
 
 #include <limits.h>
+#include "map.h"
 
 #define INF INT_MAX
 
@@ -24,5 +25,9 @@ typedef struct character {
 struct map;
 
 int character_place_pc(character_t *pc, struct map *m);
+
+int character_place_npc(character_t *npc, struct map *m, character_type_t type, char symbol);
+
+int character_get_cost(character_type_t char_type, terrain_type_t ter_type);
 
 #endif

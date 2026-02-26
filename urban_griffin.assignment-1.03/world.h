@@ -13,7 +13,7 @@ typedef struct world {
 } world;
 
 int world_init(world *w);
-int world_destory(world *w);
+int world_destroy(world *w);
 
 map* world_get_map(world *w, int x, int y); // returns map at x y
 

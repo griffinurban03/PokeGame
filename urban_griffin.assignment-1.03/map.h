@@ -31,6 +31,8 @@ typedef struct map {
 	int south_gate[2];
 	int east_gate[2];
 	int west_gate[2];
+	int **hiker_dist; // distance map for hiker
+	int **rival_dist; // distance map for rival
 } map;
 
 int map_init(map *m, int w, int h);

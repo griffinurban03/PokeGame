@@ -40,9 +40,15 @@ int map_init(map *m, int w, int h)
 
 	m->cells = malloc(h * sizeof(terrain_type_t *));
 	m->cmap = malloc(h * sizeof(struct character_t **));
+	m->hiker_dist = malloc(h * sizeof(int *));
+	m->rival_dist = malloc(h * sizeof(int *));
+
 	for (i = 0; i < h; i++) {
 		m->cells[i] = malloc(w * sizeof(terrain_type_t));
 		m->cmap[i] = malloc(w * sizeof(struct character_t *));
+		m->hiker_dist[i] = malloc(w * sizeof(int));
+		m->rival_dist[i] = malloc(w * sizeof(int));
+
 		for (j = 0; j < w; j++) {
 			m->cells[i][j] = ter_debug;
 			m->cmap[i][j] = NULL;
@@ -62,9 +68,13 @@ int map_destroy(map *m)
 	for (i = 0; i < m->height; i++) {
 		free(m->cells[i]);
 		free(m->cmap[i]);
+		free(m->hiker_dist[i]);
+		free(m->rival_dist[i]);
 	}
 	free(m->cells);
 	free(m->cmap);
+	free(m->hiker_dist);
+	free(m->rival_dist);
 
 	return 0;
 }

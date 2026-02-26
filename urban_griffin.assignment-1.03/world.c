@@ -25,7 +25,7 @@ int world_init(world *w)
 /*
  * Checks every map and frees it if it exists
  */
-int world_destory(world *w)
+int world_destroy(world *w)
 {
 	int i, j;
 

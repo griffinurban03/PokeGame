@@ -34,3 +34,14 @@
 2/19 1:30 PM - Fixed a bug where "f x y" command was not flying to correct position, and prevented negative coords.
 2/20 4:30 PM - Added a scatter function to add random boulders or trees to map
 2/20 5:00 PM - Moved some cluttered code into seperate helper functions to improve readability
+2/22 11:30 PM- Implemented Character.c and character.h to hold information about PC/NPCS
+2/22 1:30 PM - Added lookup table for movement costs per PC/NPC according to 1.03 PDF table
+2/22 2:00 PM - Added a min heap to act as the priority queue for movement
+2/24 4:00 PM - Gave PC/Hiker/Rival their own characters that display on the map, made a new "cmap" to hold locations of npcs
+2/24 4:30 PM - Implemented Dijkstras algorithm to create distance maps for rival and hiker
+2/25 5:45 PM - Fixed a bug where rivals could spawn inside a tree/boulder and hence have no movement options
+2/25 6:00 PM - Fixed a bug in Dijsktras where borders were considered
+2/25 7:00 PM - Moved UI rendering code into seperate function to remove code duplication.
+2/25 7:30 PM - Fixed ter_debug being created with non INF values, not necessary now but will be good for testing
+2/25 7:30 PM - Fixed a misspelled function world_destory... embarassing.
+2/25 8:00 PM - Packaged for 1.03 submission

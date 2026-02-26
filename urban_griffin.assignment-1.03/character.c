@@ -109,3 +109,28 @@ int character_place_pc(character_t *pc, map *m)
 	}
 	return 0;
 }
+
+/*
+ * Places an NPC on a random cell that is valid for their movement parameters
+ */
+int character_place_npc(character_t *npc, map *m, character_type_t type, char symbol)
+{
+	int placed = 0;
+	
+	npc->type = type;
+	npc->symbol = symbol;
+	
+	while (!placed) {
+		int rx = (rand() % (m->width - 2)) + 1;
+		int ry = (rand() % (m->height - 2)) + 1;
+
+		// Check if NPC can actually exist on this terrain AND not occupied already
+		if (character_get_cost(type, m->cells[ry][rx]) != INF && m->cmap[ry][rx] == NULL) {
+			npc->x = rx;
+			npc->y = ry;
+			m->cmap[ry][rx] = npc;
+			placed = 1;
+		}
+	}
+	return 0;
+}

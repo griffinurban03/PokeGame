@@ -1,3 +1,13 @@
-Assignment 1.03 - Dijkstra's Algorithm
+Assignment 1.03 - Distance Maps
 
 Hello TA,
+
+This implementation of assignment 1.03 creates distance maps for the hiker and rival NPCs using Dijkstra's algorithm.
+
+The movement costs for each PC/NPC are stored in a lookup table in character.c, this way we can access that information faster. Like the professor recommended, we store boulders and trees as a seperate terrain type with infinite cost to act as a natural blocker for all PC/NPC types. This implementation uses a min-heap with decrease priority to meet the needs of the assignment. Finally, Dijkstra's uses that priority queue to create the distance maps for both rivals and hikers to the PC.
+
+I wrote this is a way where you may move between maps still (like 1.02) and generate new distance maps for that map you move to.
+
+If there are any questions feel free to reach me at griffinu@iastate.edu
+
+

@@ -6,6 +6,7 @@
 #include "map.h"
 #include "world.h"
 #include "character.h"
+#include "path.h"
 
 void print_splashscreen() {
 printf(" /$$$$$$$   /$$$$$$  /$$   /$$ /$$$$$$$$  /$$$$$$   /$$$$$$  /$$      /$$ /$$$$$$$$\n");
@@ -19,8 +20,27 @@ printf("|__/       \\______/ |__/  \\__/|________/ \\______/ |__/  |__/|__/     
 printf("\n");
 }
                                                                                  
-#define DO_DEBUG 1                                                                                   
-                                                                                   
+#define DO_DEBUG 1                                                                                 
+
+/*
+* UI print function that controls all printing to the terminal
+*/
+void print_ui(map *m, character_t *pc, int cx, int cy) {
+	system("clear");
+	
+	map_print(m);
+	printf("Current coordinates: (%d, %d)\n", cx - 200, cy - 200);
+
+	pathfind_build_distance_map(m, pc);
+#if DO_DEBUG
+	printf("\nHiker Distance Map\n");
+	pathfind_print_distance_map(m, char_hiker);
+
+	printf("\nRival Distance Map\n");
+	pathfind_print_distance_map(m, char_rival);
+#endif
+}
+
 
 int main(int argc, char *argv[])
 {
@@ -43,12 +63,14 @@ int main(int argc, char *argv[])
 	character_t player;
 	character_place_pc(&player, current_map);
 
-	// Print map
-	map_print(current_map);
+	character_t hiker;
+	character_place_npc(&hiker, current_map, char_hiker, 'h');
 
-	// Print text - First text shown on screen - maybe a welcome message?
-	// print_splashscreen();
-	printf("Current coordinates: (%d, %d)\n", cur_x - 200, cur_y - 200);
+	character_t rival;
+	character_place_npc(&rival, current_map, char_rival, 'r');
+
+	// Print map
+	print_ui(current_map, &player, cur_x, cur_y);
 
 	bool running = true;
 	char c[20];
@@ -86,19 +108,24 @@ int main(int argc, char *argv[])
 			if (new_x < 0 || new_x >= WORLD_SIZE_X || new_y < 0 || new_y >= WORLD_SIZE_Y) {
 				printf("Cannot move: edge of world\n");
 			} else {
+				if (current_map->cmap[player.y][player.x] == &player) current_map->cmap[player.y][player.x] = NULL;
+				if (current_map->cmap[hiker.y][hiker.x] == &hiker) current_map->cmap[hiker.y][hiker.x] = NULL;
+				if (current_map->cmap[rival.y][rival.x] == &rival) current_map->cmap[rival.y][rival.x] = NULL;
+
 				cur_x = new_x;
 				cur_y = new_y;
 				current_map = world_get_map(&w, cur_x, cur_y);
-				// Clear Terminal
-				system("clear");
-				// Print the map
-				map_print(current_map);
-				// Print text
-				printf("Current coordinates: (%d, %d)\n", cur_x - 200, cur_y - 200);
+
+				// TODO - replace this later, will just spawn the player in a new spot when moving to a new map
+				character_place_pc(&player, current_map);
+				character_place_npc(&hiker, current_map, char_hiker, 'h');
+				character_place_npc(&rival, current_map, char_rival, 'r');
+
+				print_ui(current_map, &player, cur_x, cur_y);
 			}
 		}
 	}
 
-	world_destory(&w);
+	world_destroy(&w);
 	return 0;
 }
