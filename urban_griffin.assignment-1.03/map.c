@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <time.h>
 #include "map.h"
+#include "character.h"
 
 /*
  * Terrain types and properties
@@ -38,10 +39,13 @@ int map_init(map *m, int w, int h)
 	m->height = h;
 
 	m->cells = malloc(h * sizeof(terrain_type_t *));
+	m->cmap = malloc(h * sizeof(struct character_t **));
 	for (i = 0; i < h; i++) {
 		m->cells[i] = malloc(w * sizeof(terrain_type_t));
+		m->cmap[i] = malloc(w * sizeof(struct character_t *));
 		for (j = 0; j < w; j++) {
 			m->cells[i][j] = ter_debug;
+			m->cmap[i][j] = NULL;
 		}
 	}
 
@@ -57,8 +61,10 @@ int map_destroy(map *m)
 
 	for (i = 0; i < m->height; i++) {
 		free(m->cells[i]);
+		free(m->cmap[i]);
 	}
 	free(m->cells);
+	free(m->cmap);
 
 	return 0;
 }
@@ -73,7 +79,11 @@ int map_print(map *m)
 	
 	for (i = 0; i < m->height; i++) {
 		for (j = 0; j < m->width; j++) {
-			printf("%c", map_get_terrain_char(m->cells[i][j])); // Updated to use terrain_type_t
+			if (m->cmap[i][j] != NULL) {
+				printf("%c", m->cmap[i][j]->symbol);
+			} else {
+				printf("%c", map_get_terrain_char(m->cells[i][j]));
+			}
 		}
 		printf("\n");
 	}

@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include "map.h"
 #include "world.h"
+#include "character.h"
 
 void print_splashscreen() {
 printf(" /$$$$$$$   /$$$$$$  /$$   /$$ /$$$$$$$$  /$$$$$$   /$$$$$$  /$$      /$$ /$$$$$$$$\n");
@@ -37,6 +38,10 @@ int main(int argc, char *argv[])
 
 	// Get map for center of world
 	map *current_map = world_get_map(&w, cur_x, cur_y);
+
+	// Instatiate player character and place on map
+	character_t player;
+	character_place_pc(&player, current_map);
 
 	// Print map
 	map_print(current_map);

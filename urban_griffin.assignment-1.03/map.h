@@ -26,6 +26,7 @@ typedef struct map {
 	int width;
 	int height;
 	terrain_type_t **cells;
+	struct character ***cmap;
 	int north_gate[2];
 	int south_gate[2];
 	int east_gate[2];
