@@ -45,3 +45,17 @@
 2/25 7:30 PM - Fixed ter_debug being created with non INF values, not necessary now but will be good for testing
 2/25 7:30 PM - Fixed a misspelled function world_destory... embarassing.
 2/25 8:00 PM - Packaged for 1.03 submission
+3/2 4:00 PM  - Refactored map and world structs, moving the PC and distance maps to the world struct
+3/2 6:15 PM  - Fixed a preprocessor bug in map.h define macros.
+3/3 2:00 PM  - Fixed Dijkstra logic in path.c to get edge weights from the perspective of the NPC stepping into the tile.
+3/3 3:30 PM  - Finally added Dijkstra's algorithm into the path generation function
+3/3 4:00 PM  - Fixed a bug where paths were overwriting gates and preventing NPCs from pathing correctly
+3/3 4:30 PM  - Fixed a bug where NPCs could spawn on top of PokeMarts and PokeCenters
+3/4 10:00 AM - Added new NPC behavior types (Pacers, Wanderers, Sentries, Explorers).
+3/4 10:30 AM - Seperated NPC behavior types from movement types (Land, Water, Hiker) to properly support Swimmer variations of NPCs (see Masons comment on Piazza).
+3/4 11:30 AM - Implemented -numtrainers switch and guaranteed at least one Hiker and Rival spawn.
+3/4 1:00 PM  - Modified heap.c to hold character pointers and sequence numbers, allowing it to function as the queue for npc movement
+3/4 4:30 PM  - Replaced manual scanf loop with time-based priority queue loop simulating the world at 4 frames per second using usleep.
+3/4 6:00 PM  - Fixed an infinite loop deadlock caused by swimmers trying to spawn on maps with no water
+3/4 7:00 PM  - Fixed a bug where NPCs could spawn or step directly on the PC because the PC was no longer in the cmap
+3/4 9:00 PM  - Packaged for 1.04 submission

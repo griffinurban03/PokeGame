@@ -1,12 +1,12 @@
-Assignment 1.03 - Distance Maps
+Assignment 1.04 - Player and Trainers
 
 Hello TA,
 
-This implementation of assignment 1.03 creates distance maps for the hiker and rival NPCs using Dijkstra's algorithm.
+This version of the pokegame implements the player character and the npcs for real! (almost). For movement of the player character, I have chosen a stoic protagonist who stands there ground at any challenge (i.e. he does not move). That being said he will never spawn on the border or a gate either. The code follows all requirements of characters based on the report doc, as well as their movements. I've split the the types of characters in two, by who they are and how they move. i.e. this allows me to make pacers that are swimmers, etc. depending on where units spawn.
 
-The movement costs for each PC/NPC are stored in a lookup table in character.c, this way we can access that information faster. Like the professor recommended, we store boulders and trees as a seperate terrain type with infinite cost to act as a natural blocker for all PC/NPC types. This implementation uses a min-heap with decrease priority to meet the needs of the assignment. Finally, Dijkstra's uses that priority queue to create the distance maps for both rivals and hikers to the PC.
+Character and player movement order is determined by a priority queue, and ties are broken by a sequence number assigned to the pc/npc on creation.
 
-I wrote this is a way where you may move between maps still (like 1.02) and generate new distance maps for that map you move to.
+There exists a switch --numtrainers x that takes an int that allows you to spawn more trainers when running the build, with a default of 10. There will also always be at least 1 hiker and 1 rival.
 
 If there are any questions feel free to reach me at griffinu@iastate.edu
 

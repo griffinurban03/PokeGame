@@ -1,8 +1,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
+
 #include "map.h"
 #include "character.h"
+#include "heap.h"
 
 /*
  * Terrain types and properties
@@ -39,15 +41,11 @@ int map_init(map *m, int w, int h)
 	m->height = h;
 
 	m->cells = malloc(h * sizeof(terrain_type_t *));
-	m->cmap = malloc(h * sizeof(struct character_t **));
-	m->hiker_dist = malloc(h * sizeof(int *));
-	m->rival_dist = malloc(h * sizeof(int *));
+	m->cmap = malloc(h * sizeof(character_t **));
 
 	for (i = 0; i < h; i++) {
 		m->cells[i] = malloc(w * sizeof(terrain_type_t));
-		m->cmap[i] = malloc(w * sizeof(struct character_t *));
-		m->hiker_dist[i] = malloc(w * sizeof(int));
-		m->rival_dist[i] = malloc(w * sizeof(int));
+		m->cmap[i] = malloc(w * sizeof(character_t *));
 
 		for (j = 0; j < w; j++) {
 			m->cells[i][j] = ter_debug;
@@ -68,13 +66,9 @@ int map_destroy(map *m)
 	for (i = 0; i < m->height; i++) {
 		free(m->cells[i]);
 		free(m->cmap[i]);
-		free(m->hiker_dist[i]);
-		free(m->rival_dist[i]);
 	}
 	free(m->cells);
 	free(m->cmap);
-	free(m->hiker_dist);
-	free(m->rival_dist);
 
 	return 0;
 }
@@ -83,15 +77,19 @@ int map_destroy(map *m)
 /*
 * Print the map to the console
 */
-int map_print(map *m)
+int map_print(map *m, character_t *pc)
 {
 	int i, j;
 	
 	for (i = 0; i < m->height; i++) {
 		for (j = 0; j < m->width; j++) {
-			if (m->cmap[i][j] != NULL) {
+			if (pc != NULL && pc->x == j && pc->y == i) {
+				printf("%c", pc->symbol);
+			} 
+			else if (m->cmap[i][j] != NULL) {
 				printf("%c", m->cmap[i][j]->symbol);
-			} else {
+			} 
+			else {
 				printf("%c", map_get_terrain_char(m->cells[i][j]));
 			}
 		}
@@ -119,49 +117,95 @@ int map_generate_borders(map *m) {
 	return 0;
 }
 
-void dykstra_path(map *m, int start_x, int start_y, int end_x, int end_y) {
-	// Placeholder for actual algorithm, draws straight line. Should not draw paths on borders.
-
-	// place a random point between start and end
-	int mid_x = (start_x + end_x) / 2 + (rand() % 5) - 2;
-	int mid_y = (start_y + end_y) / 2 + (rand() % 5) - 2;
-	
-	if (mid_x < 1) mid_x = 1;
-	if (mid_x > m->width - 2) mid_x = m->width - 2;
-	if (mid_y < 1) mid_y = 1;
-	if (mid_y > m->height - 2) mid_y = m->height - 2;
-
-
-	// Draw from start mid, then mid to end
+void dijkstra_path(map *m, int start_x, int start_y, int end_x, int end_y) {
+	int dist[MAP_HEIGHT][MAP_WIDTH];
+	int px[MAP_HEIGHT][MAP_WIDTH];
+	int py[MAP_HEIGHT][MAP_WIDTH];
 	int x, y;
-	x = start_x;
-	y = start_y;
-	while (x != mid_x || y != mid_y) {
-		m->cells[y][x] = ter_path;
-		if (x < mid_x && x < m->width - 1) x++;
-		else if (x > mid_x && x > 0) x--;
-		if (y < mid_y && y < m->height - 1) y++;
-		else if (y > mid_y && y > 0) y--;
+
+	// Initialize grids
+	for (y = 0; y < MAP_HEIGHT; y++) {
+		for (x = 0; x < MAP_WIDTH; x++) {
+			dist[y][x] = INF;
+			px[y][x] = -1;
+			py[y][x] = -1;
+		}
 	}
 
-	x = mid_x;
-	y = mid_y;
-	while (x != end_x || y != end_y) {
-		m->cells[y][x] = ter_path;
-		if (x < end_x && x < m->width - 1) x++;
-		else if (x > end_x && x > 0) x--;
-		if (y < end_y && y < m->height - 1) y++;
-		else if (y > end_y && y > 0) y--;
-	}
+	dist[start_y][start_x] = 0;
 
+	heap_t h;
+	heap_init(&h, MAP_WIDTH * MAP_HEIGHT);
+	heap_push(&h, start_x, start_y, 0);
 
+	// 4-way movement for clean, blocky roads
+	int dx[4] = { 0,  0, -1,  1 };
+	int dy[4] = {-1,  1,  0,  0 };
+
+	heap_node_t n;
 	
+	while (heap_pop(&h, &n)) {
+		if (n.x == end_x && n.y == end_y) break; // Found destination!
+		if (n.distance > dist[n.y][n.x]) continue;
 
+		for (int i = 0; i < 4; i++) {
+			int nx = n.x + dx[i];
+			int ny = n.y + dy[i];
+
+			// Check bounds
+			if (nx >= 0 && nx < MAP_WIDTH && ny >= 0 && ny < MAP_HEIGHT) {
+				
+				// Prevent pathing along the world borders (unless it is the destination gate)
+				if ((nx == 0 || nx == MAP_WIDTH - 1 || ny == 0 || ny == MAP_HEIGHT - 1) && 
+				    !(nx == end_x && ny == end_y)) {
+					continue;
+				}
+
+				int edge_weight = 100;
+				switch(m->cells[ny][nx]) {
+					case ter_path:     edge_weight = 5;  break; // Encourage merging
+					case ter_clearing: edge_weight = 10; break;
+					case ter_grass:    edge_weight = 20; break;
+					case ter_tree:     edge_weight = 50; break;
+					case ter_boulder:  edge_weight = 50; break;
+					case ter_water:    edge_weight = 100; break;
+					case ter_mountain: edge_weight = 100; break;
+					default:           edge_weight = 50; break;
+				}
+
+				int new_dist = n.distance + edge_weight;
+				if (new_dist < dist[ny][nx]) {
+					dist[ny][nx] = new_dist;
+					px[ny][nx] = n.x;
+					py[ny][nx] = n.y;
+					heap_push(&h, nx, ny, new_dist);
+				}
+			}
+		}
+	}
+	heap_destroy(&h);
+
+	// Reconstruct the path backwards from destination to start
+	x = end_x;
+	y = end_y;
+	while (x != start_x || y != start_y) {
+		m->cells[y][x] = ter_path;
+		
+		int prev_x = px[y][x];
+		int prev_y = py[y][x];
+		
+		// Failsafe in case path is completely blocked
+		if (prev_x == -1 || prev_y == -1) break; 
+		
+		x = prev_x;
+		y = prev_y;
+	}
+	m->cells[start_y][start_x] = ter_path;
 }
 
 /*
-* Generate NS and EW paths, set 4 border cells to '#', excluding corners, randomly.
-* Then, use dykstra's to create paths between them, following edges between terrain types
+* Generate NS and EW paths, set 4 border cells to #, excluding corners, randomly (unless there exists a neighbor loaded)
+* Then, use dijkstra's to create paths between them, following edges between terrain types
 */
 int map_generate_paths(map *m, int n, int s, int e, int w) {
 
@@ -203,13 +247,20 @@ int map_generate_paths(map *m, int n, int s, int e, int w) {
 	int mid_y = m->height / 2;
 
 	// Draw paths from valid gates to the midpoint
-	if (n != -2) dykstra_path(m, north_x, 0, mid_x, mid_y);
-	if (s != -2) dykstra_path(m, south_x, m->height - 1, mid_x, mid_y);
-	if (e != -2) dykstra_path(m, m->width - 1, east_y, mid_x, mid_y);
-	if (w != -2) dykstra_path(m, 0, west_y, mid_x, mid_y);
+	if (n != -2) dijkstra_path(m, north_x, 0, mid_x, mid_y);
+	if (s != -2) dijkstra_path(m, south_x, m->height - 1, mid_x, mid_y);
+	if (e != -2) dijkstra_path(m, m->width - 1, east_y, mid_x, mid_y);
+	if (w != -2) dijkstra_path(m, 0, west_y, mid_x, mid_y);
 
 	// Fix to make sure center isnt overridden
 	m->cells[mid_y][mid_x] = ter_path;
+
+	// Fix to make sure NPCs wont path to gate tiles
+	if (n != -2) m->cells[0][north_x] = ter_gate;
+	if (s != -2) m->cells[m->height - 1][south_x] = ter_gate;
+	if (e != -2) m->cells[east_y][m->width - 1] = ter_gate;
+	if (w != -2) m->cells[west_y][0] = ter_gate;
+
 	return 0;
 }
 
@@ -239,7 +290,8 @@ int map_generate_pokeshops(map *m, int x, int y) {
 	// Place Pokemon Center if chosen
 	if (has_center) {
         	int placed = 0;
-        	while (!placed) {
+			int attempts = 0;
+        	while (!placed && attempts < 1000) { // Avoid infinite loop
             		int mx = rand() % (m->width - 4) + 2;
             		int my = rand() % (m->height - 4) + 2;
 
@@ -258,13 +310,15 @@ int map_generate_pokeshops(map *m, int x, int y) {
                 		m->cells[my+1][mx+1] = ter_center;
                 		placed = 1;
             		}
+					attempts++;
         	}
     	}
 
     	//Place PokeMart if chosen
     	if (has_mart) {
         	int placed = 0;
-       		while (!placed) {
+			int attempts = 0;
+       		while (!placed && attempts < 1000) { // Avoid infinite loop
       			int mx = rand() % (m->width - 4) + 2;
  	        	int my = rand() % (m->height - 4) + 2;
 
@@ -282,6 +336,7 @@ int map_generate_pokeshops(map *m, int x, int y) {
                 		m->cells[my+1][mx+1] = ter_mart;
                 		placed = 1;
             		}
+					attempts++;
         	}
     	}
 
@@ -353,8 +408,9 @@ int scatter_terrain_elements(map *m)
 {
 	// Place trees
 	int placed_trees = 0;
+	int attempts = 0;
 
-	while (placed_trees < 10) {
+	while (placed_trees < 10 && attempts < 1000) { // Avoid infinite loop
 		int tx = rand() % m->width;
 		int ty = rand() % m->height;
 		terrain_type_t t = m->cells[ty][tx];
@@ -363,12 +419,14 @@ int scatter_terrain_elements(map *m)
 			m->cells[ty][tx] = ter_tree;
 			placed_trees++;
 		}
+		attempts++;
 	}
 
 	// Place Boulders
 	int placed_boulders = 0;
+	attempts = 0;
 
-	while (placed_boulders < 10) {
+	while (placed_boulders < 10 && attempts < 1000) { // Avoid infinite loop
 		int bx = rand() % m->width;
 		int by = rand() % m->height;
 		terrain_type_t b = m->cells[by][bx];
@@ -377,6 +435,7 @@ int scatter_terrain_elements(map *m)
 			m->cells[by][bx] = ter_boulder;
 			placed_boulders++;
 		}
+		attempts++;
 	}
 
 	return 0;

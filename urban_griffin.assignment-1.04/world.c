@@ -2,9 +2,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#define MAP_WIDTH 80
-#define MAP_HEIGHT 21
-
 /*
  * Initializes the world of HEIGHT x WIDTH  maps to be NULL
  */

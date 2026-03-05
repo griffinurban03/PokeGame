@@ -3,10 +3,13 @@
 #include <string.h>
 #include <time.h>
 #include <stdlib.h>
+#include <unistd.h>
+
 #include "map.h"
 #include "world.h"
 #include "character.h"
 #include "path.h"
+#include "heap.h"
 
 void print_splashscreen() {
 printf(" /$$$$$$$   /$$$$$$  /$$   /$$ /$$$$$$$$  /$$$$$$   /$$$$$$  /$$      /$$ /$$$$$$$$\n");
@@ -20,24 +23,25 @@ printf("|__/       \\______/ |__/  \\__/|________/ \\______/ |__/  |__/|__/     
 printf("\n");
 }
                                                                                  
-#define DO_DEBUG 1                                                                                 
+#define DO_DEBUG 0                                                                               
 
 /*
 * UI print function that controls all printing to the terminal
 */
-void print_ui(map *m, character_t *pc, int cx, int cy) {
+void print_ui(world *w, map *m, int cx, int cy) {
 	system("clear");
 	
-	map_print(m);
+	map_print(m, &w->pc);
 	printf("Current coordinates: (%d, %d)\n", cx - 200, cy - 200);
 
-	pathfind_build_distance_map(m, pc);
+	pathfind_build_distance_map(w, m);
+
 #if DO_DEBUG
 	printf("\nHiker Distance Map\n");
-	pathfind_print_distance_map(m, char_hiker);
+	pathfind_print_distance_map(w, char_hiker);
 
 	printf("\nRival Distance Map\n");
-	pathfind_print_distance_map(m, char_rival);
+	pathfind_print_distance_map(w, char_rival);
 #endif
 }
 
@@ -45,6 +49,16 @@ void print_ui(map *m, character_t *pc, int cx, int cy) {
 int main(int argc, char *argv[])
 {
 	srand(time(NULL));
+
+	int num_trainers = 10;
+		for (int i = 1; i < argc; i++) {
+			if (strcmp(argv[i], "--numtrainers") == 0 || strcmp(argv[i], "-numtrainers") == 0) {
+				if (i + 1 < argc) {
+					num_trainers = atoi(argv[i + 1]);
+					i++;
+				}
+			}
+		}
 
 	world w;
 	world_init(&w);
@@ -60,72 +74,110 @@ int main(int argc, char *argv[])
 	map *current_map = world_get_map(&w, cur_x, cur_y);
 
 	// Instatiate player character and place on map
-	character_t player;
-	character_place_pc(&player, current_map);
+	character_place_pc(&w.pc, current_map);
 
-	character_t hiker;
-	character_place_npc(&hiker, current_map, char_hiker, 'h');
+	character_t *npcs = malloc(num_trainers * sizeof(character_t));
 
-	character_t rival;
-	character_place_npc(&rival, current_map, char_rival, 'r');
-
-	// Print map
-	print_ui(current_map, &player, cur_x, cur_y);
-
-	bool running = true;
-	char c[20];
-
-	while(running) {
-		printf("Enter a Command: ");
-		if (fgets(c, sizeof(c), stdin) == NULL) break;
-
-		int new_x = cur_x;
-		int new_y = cur_y;
-		int fly_x, fly_y;
-
-		// Check first for f x y
-		if (sscanf(c, "f %d %d", &fly_x, &fly_y) == 2) {
-			if (fly_x >= (WORLD_SIZE_X / -2 - 1) && fly_x < (WORLD_SIZE_X / 2 + 1) && fly_y >= (WORLD_SIZE_Y / -2 - 1) && fly_y < (WORLD_SIZE_Y / 2 + 1)) {
-				new_x = fly_x + 200;
-				new_y = fly_y + 200;
-			} else {
-				printf("Coordinates out of bounds\n");
-				continue;
-			}
+	for (int i = 0; i < num_trainers; i++) {
+		if (i == 0) {
+			character_place_npc(&npcs[i], current_map, &w.pc, char_hiker, move_hiker, 'h');
+		} else if (i == 1) {
+			character_place_npc(&npcs[i], current_map, &w.pc, char_rival, move_land, 'r');
 		} else {
-			switch (c[0]) {
-				case 'n': printf("Moved North\n"); new_y--; break;
-				case 's': printf("Moved South\n"); new_y++; break;
-				case 'e': printf("Moved East\n");  new_x++; break;
-				case 'w': printf("Moved West\n");  new_x--; break;
-				case 'q': printf("Quitting...\n"); running = false; break;
-				case '\n': break;
-				default: printf("Enter a valid command: n | e | s | w | q | f x y\n"); break;
+			// Randomly select behavior
+			int r = rand() % 6;
+			character_type_t ctype;
+			char sym;
+			
+			switch (r) {
+				case 0: ctype = char_hiker; sym = 'h'; break;
+				case 1: ctype = char_rival; sym = 'r'; break;
+				case 2: ctype = char_pacer; sym = 'p'; break;
+				case 3: ctype = char_wanderer; sym = 'w'; break;
+				case 4: ctype = char_sentry; sym = 's'; break;
+				case 5: ctype = char_explorer; sym = 'e'; break;
 			}
-		}
 
-		if (running && (new_x != cur_x || new_y != cur_y)) {
-			if (new_x < 0 || new_x >= WORLD_SIZE_X || new_y < 0 || new_y >= WORLD_SIZE_Y) {
-				printf("Cannot move: edge of world\n");
-			} else {
-				if (current_map->cmap[player.y][player.x] == &player) current_map->cmap[player.y][player.x] = NULL;
-				if (current_map->cmap[hiker.y][hiker.x] == &hiker) current_map->cmap[hiker.y][hiker.x] = NULL;
-				if (current_map->cmap[rival.y][rival.x] == &rival) current_map->cmap[rival.y][rival.x] = NULL;
-
-				cur_x = new_x;
-				cur_y = new_y;
-				current_map = world_get_map(&w, cur_x, cur_y);
-
-				// TODO - replace this later, will just spawn the player in a new spot when moving to a new map
-				character_place_pc(&player, current_map);
-				character_place_npc(&hiker, current_map, char_hiker, 'h');
-				character_place_npc(&rival, current_map, char_rival, 'r');
-
-				print_ui(current_map, &player, cur_x, cur_y);
+			// Decide movement constraint (Swimmer vs Land)
+			movement_type_t mtype = move_land; 
+			
+			// If it's a generic NPC, give it a 20% chance to be a swimmer
+			if (ctype != char_hiker && ctype != char_rival) {
+				if (rand() % 100 < 20) {
+					mtype = move_water;
+					// Note: Assignment says swimmer characters are typically 
+					// represented by 'm' in some roguelikes, but we'll stick 
+					// to the behavior letter as clarified by the instructor!
+				}
+			} else if (ctype == char_hiker) {
+				mtype = move_hiker;
 			}
+
+			character_place_npc(&npcs[i], current_map, &w.pc, ctype, mtype, sym);
 		}
 	}
 
+	// Initial distance map generation
+	pathfind_build_distance_map(&w, current_map);
+	print_ui(&w, current_map, cur_x, cur_y);
+
+	// 3. Initialize the Turn Queue (Heap)
+	heap_t turn_heap;
+	heap_init(&turn_heap, num_trainers + 1);
+
+	// Push PC (seq_num 0 ensures PC wins ties)
+	heap_push_character(&turn_heap, &w.pc, 0, 0);
+
+	// Push all NPCs (seq_num i + 1)
+	for (int i = 0; i < num_trainers; i++) {
+		heap_push_character(&turn_heap, &npcs[i], 0, i + 1);
+	}
+
+	bool running = true;
+	heap_node_t current_turn;
+
+	// Turn-based Event Loop
+	while (running) {
+		if (!heap_pop(&turn_heap, &current_turn)) break;
+
+		character_t *c = current_turn.c;
+		int current_time = current_turn.distance;
+
+		if (c->type == char_pc) {
+			// PC Turn
+			// The PC stands still for this assignment. 
+
+			// Recalculate maps and draw frame
+			pathfind_build_distance_map(&w, current_map);
+			print_ui(&w, current_map, cur_x, cur_y);
+			
+			// Pause for 250ms (4 Frames Per Second)
+			usleep(250000); 
+
+			// Push PC back into queue
+			int cost = character_get_cost(c->mtype, current_map->cells[c->y][c->x]);
+			heap_push_character(&turn_heap, c, current_time + cost, current_turn.seq_num);
+		} else {
+			// NPC Turn
+			int nx, ny;
+			character_get_next_pos(&w, current_map, c, &nx, &ny);
+
+			// Move the NPC in the cmap if coordinates changed
+			if (nx != c->x || ny != c->y) {
+				current_map->cmap[c->y][c->x] = NULL;
+				c->x = nx;
+				c->y = ny;
+				current_map->cmap[c->y][c->x] = c;
+			}
+
+			// Push NPC back into queue with new time
+			int cost = character_get_cost(c->mtype, current_map->cells[c->y][c->x]);
+			heap_push_character(&turn_heap, c, current_time + cost, current_turn.seq_num);
+		}
+	}
+
+	heap_destroy(&turn_heap);
+	free(npcs); 
 	world_destroy(&w);
 	return 0;
 }

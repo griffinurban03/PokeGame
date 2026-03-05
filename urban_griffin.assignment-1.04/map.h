@@ -3,6 +3,11 @@
 
 #include <stdbool.h>
 
+#define MAP_WIDTH 80
+#define MAP_HEIGHT 21
+
+struct character;
+
 /*
  * Enum definitions of all terrain types
  */
@@ -31,13 +36,11 @@ typedef struct map {
 	int south_gate[2];
 	int east_gate[2];
 	int west_gate[2];
-	int **hiker_dist; // distance map for hiker
-	int **rival_dist; // distance map for rival
 } map;
 
 int map_init(map *m, int w, int h);
 int map_destroy(map *m);
-int map_print(map *m);
+int map_print(map *m, struct character *pc);
 int map_generate(map *m, int x, int y, int n, int s, int e, int w);
 
 int map_generate_terrain(map *m);
