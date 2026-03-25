@@ -4,6 +4,7 @@
 #include <time.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <ncurses.h>
 
 #include "map.h"
 #include "world.h"
@@ -50,6 +51,16 @@ int main(int argc, char *argv[])
 {
 	srand(time(NULL));
 
+	/*
+	 * Ncurses setup
+	 */
+	initscr();   		// ncurses init
+	raw();       		// Disable line buffering
+	noecho();    	      	// Hide typed keys
+	curs_set(0); 	      	// Hide cursor
+	keypad(stdscr, TRUE); 	// Enable special keys
+	start_color();        	// Enable color
+
 	int num_trainers = 10;
 		for (int i = 1; i < argc; i++) {
 			if (strcmp(argv[i], "--numtrainers") == 0 || strcmp(argv[i], "-numtrainers") == 0) {
@@ -67,8 +78,6 @@ int main(int argc, char *argv[])
 	int cur_x = 200;
 	int cur_y = 200;
 
-	// Clear the terminal
-	system("clear");
 
 	// Get map for center of world
 	map *current_map = world_get_map(&w, cur_x, cur_y);
@@ -179,5 +188,8 @@ int main(int argc, char *argv[])
 	heap_destroy(&turn_heap);
 	free(npcs); 
 	world_destroy(&w);
+
+	endwin(); // Closes ncurses and restores terminal
+
 	return 0;
 }
