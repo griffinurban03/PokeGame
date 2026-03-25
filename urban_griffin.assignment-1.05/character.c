@@ -109,7 +109,8 @@ int character_place_npc(character_t *npc, map *m, character_t *pc, character_typ
 	npc->type = type;
 	npc->mtype = mtype;
 	npc->symbol = symbol;
-	
+	npc->defeated = 0;
+
 	while (!placed && attempts < 1000) { // Avoid infinite loop
 		int rx = (rand() % (m->width - 2)) + 1;
 		int ry = (rand() % (m->height - 2)) + 1;
@@ -161,8 +162,8 @@ void character_get_next_pos(world *w, map *m, character_t *c, int *next_x, int *
 	*next_x = c->x;
 	*next_y = c->y;
 
-	// Sentries don't move
-	if (c->type == char_sentry || c->type == char_pc) return;
+	// Sentries AND defeated NPCS don't move
+	if (c->type == char_sentry || c->type == char_pc || c->defeated) return;
 
 	int nx, ny;
 

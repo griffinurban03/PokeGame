@@ -33,6 +33,7 @@ typedef struct character {
 	int y;
 	int dir_x;
 	int dir_y;
+	int defeated;
 } character_t;
 
 struct map;
