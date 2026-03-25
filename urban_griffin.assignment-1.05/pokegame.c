@@ -24,18 +24,18 @@ printf("|__/       \\______/ |__/  \\__/|________/ \\______/ |__/  |__/|__/     
 printf("\n");
 }
                                                                                  
-#define DO_DEBUG 0                                                                               
+// #define DO_DEBUG 0                                                                               
 
 /*
 * UI print function that controls all printing to the terminal
 * Now reworked to use NCURSES
 */
-void print_ui(world *w, map *m, int cx, int cy) {
+void print_ui(world *w, map *m, char *msg) {
 	clear(); // NCURSES use of System(clear)
 	
-	mvprintw(0, 0, "Current coordinates: (%d, %d)", cx - 200, cy - 200); // New line for current location
-	
-	pathfind_build_distance_map(w, m);
+	if (msg != NULL && strlen(msg) > 0) {
+		mvprint(0, 0, "%s", msg);
+	}
 	
 	map_print(m, &w->pc);
 
@@ -43,14 +43,6 @@ void print_ui(world *w, map *m, int cx, int cy) {
 	mvprintw(23, 0, "Press Q to quit.");
 
 	refresh();
-
-#if DO_DEBUG
-	printf("\nHiker Distance Map\n");
-	pathfind_print_distance_map(w, char_hiker);
-
-	printf("\nRival Distance Map\n");
-	pathfind_print_distance_map(w, char_rival);
-#endif
 }
 
 
