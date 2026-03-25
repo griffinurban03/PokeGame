@@ -70,10 +70,11 @@ int main(int argc, char *argv[])
 	init_pair(1, COLOR_GREEN, COLOR_BLACK);		// Nature?
 	init_pair(2, COLOR_BLUE, COLOR_BLACK);		// Water
 	init_pair(3, COLOR_WHITE, COLOR_BLACK);		// Mountains/Boulders
-	init_Pair(4, COLOR_YELLOW, COLOR_BLACK);	// Paths/Gates
+	init_pair(4, COLOR_YELLOW, COLOR_BLACK);	// Paths/Gates
 	init_pair(5, COLOR_MAGENTA, COLOR_BLACK);	// Buildings
 	init_pair(6, COLOR_CYAN, COLOR_BLACK);		// PC
 	init_pair(7, COLOR_RED, COLOR_BLACK);		// NPCS?
+	init_pair(8, COLOR_BLACK, COLOR_WHITE);		// Debug
 
 	int num_trainers = 10;
 		for (int i = 1; i < argc; i++) {

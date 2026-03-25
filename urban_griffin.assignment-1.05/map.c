@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
+#include <ncurses.h>
 
 #include "map.h"
 #include "character.h"
@@ -83,17 +84,48 @@ int map_print(map *m, character_t *pc)
 	
 	for (i = 0; i < m->height; i++) {
 		for (j = 0; j < m->width; j++) {
+			char symbol;
+			int color;
+			
 			if (pc != NULL && pc->x == j && pc->y == i) {
-				printf("%c", pc->symbol);
+				symbol = pc->symbol;
+				color = 6; // PC ID
 			} 
 			else if (m->cmap[i][j] != NULL) {
-				printf("%c", m->cmap[i][j]->symbol);
+				symbol = m->cmap[i][j]->symbol;
+				color = 7; // NPC ID
 			} 
 			else {
-				printf("%c", map_get_terrain_char(m->cells[i][j]));
+				terrain_type_t t = m->cells[i][j];
+				symbol = map_get_terrain_char(t);
+
+				switch(t) {
+					case ter_tree:
+					case ter_forest:
+					case ter_grass:
+					case ter_clearing:
+						color = 1; break; // Grass/Nature ID
+					case ter_water:
+						color = 2; break; // Water ID
+					case ter_boulder:
+					case ter_mountain:
+						color = 3; break; // Rock ID
+					case ter_path:
+					case ter_gate:
+						color = 4; break; // Path ID
+					case ter_mart:
+					case ter_center:
+						color = 5; break; // Shop ID
+					default:
+						color = 8; break; // Debug ID
+				}
+
 			}
+
+			attron(COLOR_PAIR(color));
+			mvaddch(i + 1, j, symbol);
+			attroff(COLOR_PAIR(color));
 		}
-		printf("\n");
 	}
 
 	return 0;
