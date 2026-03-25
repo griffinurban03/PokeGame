@@ -34,7 +34,7 @@ void print_ui(world *w, map *m, char *msg) {
 	clear(); // NCURSES use of System(clear)
 	
 	if (msg != NULL && strlen(msg) > 0) {
-		mvprint(0, 0, "%s", msg);
+		mvprintw(0, 0, "%s", msg);
 	}
 	
 	map_print(m, &w->pc);
@@ -134,8 +134,9 @@ int main(int argc, char *argv[])
 	}
 
 	// Initial distance map generation
+	char message[80] = "";
 	pathfind_build_distance_map(&w, current_map);
-	print_ui(&w, current_map, cur_x, cur_y);
+	print_ui(&w, current_map, message);
 
 	// Initialize the Turn Queue (Heap)
 	heap_t turn_heap;
@@ -151,7 +152,7 @@ int main(int argc, char *argv[])
 
 	bool running = true;
 	heap_node_t current_turn;
-
+	
 	// Turn-based Event Loop
 	while (running) {
 		if (!heap_pop(&turn_heap, &current_turn)) break;
@@ -160,25 +161,87 @@ int main(int argc, char *argv[])
 		int current_time = current_turn.distance;
 
 		if (c->type == char_pc) {
-			// PC Turn
-			// The PC stands still for this assignment. 
+			bool valid_turn = false;
 
-			// Recalculate maps and draw frame
-			pathfind_build_distance_map(&w, current_map);
-			print_ui(&w, current_map, cur_x, cur_y);
-			
-			// Pause for 250ms (4 Frames Per Second)
-			usleep(250000); 
+			while (!valid_turn) {
+				// Recalc distance maps
+				pathfind_build_distance_map(&w, current_map);
+				print_ui(&w, current_map, message);
 
-			// Push PC back into queue
-			int cost = character_get_cost(c->mtype, current_map->cells[c->y][c->x]);
-			heap_push_character(&turn_heap, c, current_time + cost, current_turn.seq_num);
+				int ch = getch();
+				int nx = c->x;
+				int ny = c->y;
+				message[0] = '\0'; // Clear msg buffer for next action
+				
+				switch(ch) {
+					case 'y': nx--; ny--; break; 	// UP-LEFT
+					case 'u': nx++; ny--; break; 	// UP-RIGHT
+					case 'h': nx--; break;		// LEFT
+					case 'j': ny++; break;		// DOWN
+					case 'k': ny--; break;		// UP
+					case 'l': nx++; break;		// RIGHT
+					case 'b': nx--; ny++; break;	// DOWN-LEFT
+					case 'n': nx++; ny++; break;	// DOWN-RIGHT
+					case ' ': valid_turn = true;	// REST/WAIT 
+						  break;
+					case '>':			// ENTER BUILDING
+						if (current_map->cells[c->y][c->x] == ter_center || 
+						current_map->cells[c->y][c->x] == ter_mart) {
+							clear();
+							mvprintw(10, 25, "Welcome in!");
+							mvprintw(12, 25, "Press '<' to exit.");
+							refresh();
+							while(getch() != '<'); // Wait until exit
+						} else {
+							strcpy(message, "No buildings here! Try looking for a C or M");
+						}
+						continue;
+					case 'q':			// QUIT GAME
+						running = false;
+						valid_turn = true;
+						break;
+					case 't':
+						continue;
+					default:
+						strcpy(message, "Invalid input.");
+						continue;
+				}
+
+				if (!running) break;
+
+				// Validate new coordinates if move attempted
+				if (!valid_turn) {
+					if (nx < 1 || nx >= MAP_WIDTH - 1 || ny < 1 || ny >= MAP_HEIGHT - 1) {
+						strcpy(message, "This is the edge of the map, try using a gate to move!");
+					} else if (current_map->cells[ny][nx] == ter_gate) {
+						strcpy(message, "NO GATES IN THIS ASSIGNMENT NICE TRY HAHAHAHA");
+					} else if (character_get_cost(c->mtype, current_map->cells[ny][nx]) == INF) {
+						strcpy(message, "There is an obstacle in the way!");
+					} else if (current_map->cmap[ny][nx] != NULL) {
+						strcpy(message, "Placeholder for NPC. Press ESC to exit.");
+						print_ui(&w, current_map, message);
+						while(getch() != 27); // ESC ASCII
+						strcpy(message, "NPC Defeated TBD.");
+						valid_turn = true;
+					} else {
+						// Its a valid turn
+						c->x = nx;
+						c->y = ny;
+						valid_turn = true;
+					}
+				}
+			}
+
+			if (running) {
+				int cost = character_get_cost(c->mtype, current_map->cells[c->y][c->x]);
+				if (cost == INF) cost = 10; // Failsafe
+				heap_push_character(&turn_heap, c, current_time + cost, current_turn.seq_num);
+			}
 		} else {
-			// NPC Turn
+			// NPCs turn
 			int nx, ny;
 			character_get_next_pos(&w, current_map, c, &nx, &ny);
 
-			// Move the NPC in the cmap if coordinates changed
 			if (nx != c->x || ny != c->y) {
 				current_map->cmap[c->y][c->x] = NULL;
 				c->x = nx;
@@ -186,9 +249,10 @@ int main(int argc, char *argv[])
 				current_map->cmap[c->y][c->x] = c;
 			}
 
-			// Push NPC back into queue with new time
-			int cost = character_get_cost(c->mtype, current_map->cells[c->y][c->x]);
-			heap_push_character(&turn_heap, c, current_time + cost, current_turn.seq_num);
+			if (running) {
+				int cost = character_get_cost(c->mtype, current_map->cells[c->y][c->x]);
+				heap_push_character(&turn_heap, c, current_time + cost, current_turn.seq_num);
+			}
 		}
 	}
 
