@@ -1,7 +1,7 @@
 all: pokegame
 
 pokegame: map.o world.o character.o heap.o path.o pokegame.o
-	gcc -g map.o world.o character.o heap.o path.o pokegame.o -o pokegame
+	gcc -g map.o world.o character.o heap.o path.o pokegame.o -o pokegame -lncurses
 
 map.o: map.c map.h character.h heap.h
 	gcc -Wall -Werror -g map.c -c
