@@ -28,14 +28,21 @@ printf("\n");
 
 /*
 * UI print function that controls all printing to the terminal
+* Now reworked to use NCURSES
 */
 void print_ui(world *w, map *m, int cx, int cy) {
-	system("clear");
+	clear(); // NCURSES use of System(clear)
+	
+	mvprintw(0, 0, "Current coordinates: (%d, %d)", cx - 200, cy - 200); // New line for current location
+	
+	pathfind_build_distance_map(w, m);
 	
 	map_print(m, &w->pc);
-	printf("Current coordinates: (%d, %d)\n", cx - 200, cy - 200);
 
-	pathfind_build_distance_map(w, m);
+	mvprintw(22, 0, "Use vi keys or numpad to move.");
+	mvprintw(23, 0, "Press Q to quit.");
+
+	refresh();
 
 #if DO_DEBUG
 	printf("\nHiker Distance Map\n");
@@ -137,7 +144,7 @@ int main(int argc, char *argv[])
 	pathfind_build_distance_map(&w, current_map);
 	print_ui(&w, current_map, cur_x, cur_y);
 
-	// 3. Initialize the Turn Queue (Heap)
+	// Initialize the Turn Queue (Heap)
 	heap_t turn_heap;
 	heap_init(&turn_heap, num_trainers + 1);
 
