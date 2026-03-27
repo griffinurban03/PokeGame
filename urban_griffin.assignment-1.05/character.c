@@ -183,11 +183,12 @@ void character_get_next_pos(world *w, map *m, character_t *c, int *next_x, int *
 				// Bounds check
 				if (nx > 0 && nx < MAP_WIDTH - 1 && ny > 0 && ny < MAP_HEIGHT - 1) {
 					
+					/*
 					if (nx == w->pc.x && ny == w->pc.y) {
 						// TODO put check if hit player
 						continue; 
 					}
-
+					*/
 					// Collision check for cmap
 					if (m->cmap[ny][nx] == NULL && character_get_cost(c->mtype, m->cells[ny][nx]) != INF) {
 						if (dist_map[ny][nx] < min_dist) {
@@ -213,10 +214,12 @@ void character_get_next_pos(world *w, map *m, character_t *c, int *next_x, int *
 	else if (m->cmap[ny][nx] != NULL) {
 		obstacle = true;
 	} 
+	/*
 	else if (nx == w->pc.x && ny == w->pc.y) {
 		obstacle = true; 
 		// TODO if hit player
 	}
+	*/
 	else if (character_get_cost(c->mtype, m->cells[ny][nx]) == INF) {
 		obstacle = true; // Impassable terrain
 	}

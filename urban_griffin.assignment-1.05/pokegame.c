@@ -57,10 +57,11 @@ int main(int argc, char *argv[])
 	curs_set(0); 	      	// Hide cursor
 	keypad(stdscr, TRUE); 	// Enable special keys
 	start_color();        	// Enable color
+	set_escdelay(25);	// Remove ESC key delay
 
 	// Color definitions for objects init_pair(ID, FG COLOR, BG COLOR)
 	init_pair(1, COLOR_GREEN, COLOR_BLACK);		// Nature?
-	init_pair(2, COLOR_BLUE, COLOR_BLACK);		// Water
+	init_pair(2, COLOR_CYAN, COLOR_BLACK);		// Water
 	init_pair(3, COLOR_WHITE, COLOR_BLACK);		// Mountains/Boulders
 	init_pair(4, COLOR_YELLOW, COLOR_BLACK);	// Paths/Gates
 	init_pair(5, COLOR_MAGENTA, COLOR_BLACK);	// Buildings
@@ -174,14 +175,24 @@ int main(int argc, char *argv[])
 				message[0] = '\0'; // Clear msg buffer for next action
 				
 				switch(ch) {
+					case '7':
 					case 'y': nx--; ny--; break; 	// UP-LEFT
+					case '9':
 					case 'u': nx++; ny--; break; 	// UP-RIGHT
+					case '4':
 					case 'h': nx--; break;		// LEFT
+					case '2':
 					case 'j': ny++; break;		// DOWN
+					case '8':
 					case 'k': ny--; break;		// UP
+					case '6':
 					case 'l': nx++; break;		// RIGHT
+					case '1':
 					case 'b': nx--; ny++; break;	// DOWN-LEFT
+					case '3':
 					case 'n': nx++; ny++; break;	// DOWN-RIGHT
+					case '5':
+					case '.':
 					case ' ': valid_turn = true;	// REST/WAIT 
 						  break;
 					case '>':			// ENTER BUILDING
@@ -196,11 +207,36 @@ int main(int argc, char *argv[])
 							strcpy(message, "No buildings here! Try looking for a C or M");
 						}
 						continue;
+					case 'Q':
 					case 'q':			// QUIT GAME
 						running = false;
 						valid_turn = true;
 						break;
-					case 't':
+					case 't':			// TRAINER MENU
+						int scroll = 0;
+						int key;
+						do {
+							clear();
+							mvprintw(0, 0, "Trainer List (Use UP/DOWN arrows to scroll, ESC to exit");
+
+							for (int i = 0; i < 20 && (i + scroll) < num_trainers; i++) {
+								character_t *t = &npcs[i + scroll];
+
+								int dy = c->y - t->y;
+								int dx = c->x - t->x;
+
+								char v[10], h[10];
+								strcpy(v, dy > 0 ? "north" : "south");
+								strcpy(h, dx > 0 ? "west" : "east");
+
+								mvprintw(i + 2, 0, "%c, %d %s and %d %s", t->symbol, abs(dy), v, abs(dx), h);
+							}
+							refresh();
+
+							key = getch();
+							if (key == KEY_UP && scroll > 0) scroll--;
+							if (key == KEY_DOWN && scroll < num_trainers - 20) scroll++;
+						} while (key != 27);
 						continue;
 					default:
 						strcpy(message, "Invalid input.");
@@ -211,18 +247,27 @@ int main(int argc, char *argv[])
 
 				// Validate new coordinates if move attempted
 				if (!valid_turn) {
-					if (nx < 1 || nx >= MAP_WIDTH - 1 || ny < 1 || ny >= MAP_HEIGHT - 1) {
-						strcpy(message, "This is the edge of the map, try using a gate to move!");
-					} else if (current_map->cells[ny][nx] == ter_gate) {
-						strcpy(message, "NO GATES IN THIS ASSIGNMENT NICE TRY HAHAHAHA");
+					if (current_map->cells[ny][nx] == ter_gate) {
+						strcpy(message, "Sorry! No gate traversal for this assignment.");
+					} else if (nx < 1 || nx >= MAP_WIDTH - 1 || ny < 1 || ny >= MAP_HEIGHT - 1) {
+						strcpy(message, "This is the edge of the map, try using a gate!");
 					} else if (character_get_cost(c->mtype, current_map->cells[ny][nx]) == INF) {
 						strcpy(message, "There is an obstacle in the way!");
 					} else if (current_map->cmap[ny][nx] != NULL) {
-						strcpy(message, "Placeholder for NPC. Press ESC to exit.");
-						print_ui(&w, current_map, message);
-						while(getch() != 27); // ESC ASCII
-						strcpy(message, "NPC Defeated TBD.");
-						valid_turn = true;
+						character_t *enemy = current_map->cmap[ny][nx];
+						if (!enemy->defeated) {
+							strcpy(message, "Placeholder for NPC. Press ESC to exit.");
+							print_ui(&w, current_map, message);
+							while(getch() != 27); // ESC ASCII
+							enemy->defeated = 1;
+							strcpy(message, "NPC Defeated TBA.");
+							valid_turn = true;
+						} else {
+							strcpy(message, "You step over the trainer.");
+							c->x = nx;
+							c->y = ny;
+							valid_turn = true;
+						}
 					} else {
 						// Its a valid turn
 						c->x = nx;
@@ -241,8 +286,14 @@ int main(int argc, char *argv[])
 			// NPCs turn
 			int nx, ny;
 			character_get_next_pos(&w, current_map, c, &nx, &ny);
-
-			if (nx != c->x || ny != c->y) {
+			
+			if (nx == w.pc.x && ny == w.pc.y && !c->defeated) {
+				strcpy(message, "A Trainer attacked you! Press ESC to leave.");
+				print_ui(&w, current_map, message);
+				while(getch() != 27);
+				c->defeated = 1;
+				strcpy(message, "You defeated the attacking trainer!");
+			} else if (nx != c->x || ny != c->y) {
 				current_map->cmap[c->y][c->x] = NULL;
 				c->x = nx;
 				c->y = ny;

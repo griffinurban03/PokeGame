@@ -59,3 +59,16 @@
 3/4 6:00 PM  - Fixed an infinite loop deadlock caused by swimmers trying to spawn on maps with no water
 3/4 7:00 PM  - Fixed a bug where NPCs could spawn or step directly on the PC because the PC was no longer in the cmap
 3/4 9:00 PM  - Packaged for 1.04 submission
+3/24 11:00AM - Installed and linked ncurses to project and Makefile. Updated main() to init ncurses screen
+3/24 11:30AM - Refactored print_ui and map_print methods to use ncurses print instead of printf
+3/24 1:00 PM - Added 8 color pairs for all color options available in game. Color applies to all terrain and PC/NPCS
+3/24 8:00 PM - Replaced automated loop from 1.04 with getch() to wait for user input to move.
+3/24 9:00 PM - Added vi keys for the player and collision for terrain types, and preventing map transitions
+3/25 4:00 PM - Added building entry to pokemarts/centers, TBA for additional functionality, just use < to leave
+3/25 5:00 PM - Added placeholder battles for trainers, trainers are defeated by the all mighty esc key.
+3/25 5:30 PM - Implemented defeat logic and death to trainers. Defeated NPCs no longer pursue the PC
+3/25 6:00 PM - Implemented trainer list (t) to display and scroll trainers
+3/25 6:00 PM - Fixed a bug where PC could not move over defeated trainers.
+3/25 6:30 PM - Fixed a bug where NPCs couldnt attack player.
+3/25 6:30 PM - Fixed a bug (?) where ESC key stalled for 1 sec on press (using set_escdelay(25))
+3/25 6:30 PM - Packaged for 1.05 submission! 

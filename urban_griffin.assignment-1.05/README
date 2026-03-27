@@ -1,12 +1,18 @@
-Assignment 1.04 - Player and Trainers
+Assignment 1.05 - ncurses
 
 Hello TA,
 
-This version of the pokegame implements the player character and the npcs for real! (almost). For movement of the player character, I have chosen a stoic protagonist who stands there ground at any challenge (i.e. he does not move). That being said he will never spawn on the border or a gate either. The code follows all requirements of characters based on the report doc, as well as their movements. I've split the the types of characters in two, by who they are and how they move. i.e. this allows me to make pacers that are swimmers, etc. depending on where units spawn.
+This version of the pokegame implements ncurses! I reserve the 1st line on the screen for messages, and the last 2 for status effects (to be used later). The rest of the screen remains as the "actual map". The player is a teal color, while trainers are red. Everything else is pretty self explanatory. I also removed the old sleep() method to run continuously from 1.04 and shifted to ncurses getch() to await user input to "proceed" the game? Do a turn? You know what Im trying to say. The player can be controlled using vi cursor movement, use '>' to enter any poke-store, use 'q' or 'Q' to quit, use 't' to pull up a menu of all trainers on screen, and ' ' to wait (thats a space).
 
-Character and player movement order is determined by a priority queue, and ties are broken by a sequence number assigned to the pc/npc on creation.
+The player can engage in WIP battles with trainers, simply defeat them with the all powerful 'esc' key. Trainers will no longer pursue the player or be interacted with when defeated, and the player may move over them. I made this decision to prevent the player from softlocking themselves, i.e. imagine the scenario of a path over water or through a mountain. If a trainer dies on that tile, they could block the player from passing them. Therefore I allow the player to move on and over the defeated trainer. I think this is what the assignment description is referring to when it says "nothing happens", but figured I should explain myself here too. The player will also not be able to move into any illegal cells, (that is borders, boulders, trees, etc.) or gates to transition maps (as stated in the assinment desc.).
 
-There exists a switch --numtrainers x that takes an int that allows you to spawn more trainers when running the build, with a default of 10. There will also always be at least 1 hiker and 1 rival.
+In addition, all key presses require NO HITTING of the enter key, completely unbuffered. :)
+
+There is a bug (I think) surrounding the esc key. It takes 1 second longer to process compared to other inputs. I am not sure of the source.
+
+NEVERMIND! ncurses looks to see if you are going to press another key after esc, and it has a timeout of 1 sec to confirm that. Might be good to pass on to other students. I fixed it by using set_escdelay(25);
+
+Anyways, thanks!
 
 If there are any questions feel free to reach me at griffinu@iastate.edu
 
